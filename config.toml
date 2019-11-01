@@ -24,7 +24,7 @@ enableEmoji = true
 # hugo-coder theme settings
 [params]
   author = "Andy White"
-  info = "Full stack developer and fan of typed functional programming"
+  info = "I'm a full stack developer and a big fan of typed functional programming!"
   description = "Andy White's personal website"
   keywords = "blog,developer,personal"
   avatarurl = "images/andy.jpeg"
