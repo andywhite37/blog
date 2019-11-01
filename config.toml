@@ -1,0 +1,30 @@
+baseURL = "https://andywhite37.github.io/"
+title = "Andy White's Blog"
+languageCode = "en-us"
+theme = "ananke"
+
+# Site generation
+enableRobotsTXT = true
+
+# Code blocks
+pygmentsCodeFences = true
+pygmentsCodeFencesGuessSyntax = true
+
+# Emoji
+enableEmoji = true
+
+[sitemap]
+  changefreq = "monthly"
+  priority = 0.5
+  filename = "sitemap.xml"
+
+[params]
+  # Ananke theme settings
+  description = "A blog about functional programming and whatever else."
+  body_classes = "sans-serif bg-near-white"
+  facebook = "https://facebook.com/andywhite2"
+  twitter = "https://twitter.com/whitehouse3001"
+  github = "https://github.com/andywhite37"
+  linkedin = "https://linkedin.com/in/andywhitesoftwaredeveloper"
+  background_color_class = "bg-black"
+  show_reading_time = true
