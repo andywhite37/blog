@@ -1,0 +1,1 @@
+This site was generated from the source code in this repository: https://github.com/andywhite37/blog
