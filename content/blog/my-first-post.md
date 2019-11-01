@@ -1,7 +1,7 @@
 ---
 title: "My First Post"
 date: 2019-10-31T21:11:53-06:00
-draft: true
+draft: false
 ---
 
 # H1
