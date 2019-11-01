@@ -17,10 +17,16 @@ I'm currently using the [hugo-coder theme](https://themes.gohugo.io/hugo-coder/)
 
 ```sh
 # Clone the repo
-> git clone git@github.com:andywhite37/blog
-> cd blog
+# --recursive b/c themes and the public/ folder are submodules
+> git clone --recursive git@github.com:andywhite37/blog
 
-# Themes and the public/ folder are submodules
+# Go into the repo
+> cd blog
+```
+
+# Update themes and other submodules
+
+```
 > git submodule update --init --recursive
 ```
 
@@ -31,15 +37,15 @@ I'm currently using the [hugo-coder theme](https://themes.gohugo.io/hugo-coder/)
 > hugo server -D
 ```
 
-# Build
+# Build site to public/
 
 ```
 > hugo
 ```
 
-# Build and deploy
+# Build site to public/ and deploy
 
-This builds the site to `public/`, then commits and pushes the `public/`
+This script builds the site to `public/`, then commits and pushes the `public/`
 folder (which is a submodule to my GitHub pages repo https://github.com/andywhite37/andywhite37.github.io.  Then it commits and pushes the submodule change (and any other changes) to this `blog` repo.
 
 ```sh
