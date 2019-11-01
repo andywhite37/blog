@@ -27,10 +27,12 @@ echo_command() {
 echo_green "Deploying updates to GitHub pages..."
 
 # TODO: clean out the public folder?
+echo_cyan "Cleaning public/ folder..."
+echo_command "find public -type f ! -name '.git' -delete"
 
 # Build site to public/ (with drafts on for now)
 echo_cyan "Building site..."
-echo_command "hugo -D"
+echo_command "hugo"
 
 # Commit and push the site to the submodule
 echo_cyan "Pushing public/ folder..."

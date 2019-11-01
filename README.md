@@ -9,18 +9,39 @@ so when I run the hugo build, it dumps the static site into that folder, which I
 
 # Theme
 
-I'm currently using the [Ananke theme](https://github.com/budparr/gohugo-theme-ananke)
+~~I'm currently using the [ananke theme](https://github.com/budparr/gohugo-theme-ananke)~~
 
-# Development
+I'm currently using the [hugo-coder theme](https://themes.gohugo.io/hugo-coder/)
 
-## Run local server
+# First time setup
+
+```sh
+# Clone the repo
+> git clone git@github.com:andywhite37/blog
+> cd blog
+
+# Themes and the public/ folder are submodules
+> git submodule update --init --recursive
+```
+
+# Run local server
 
 ```
+# Run he local server (with drafts included)
 > hugo server -D
 ```
 
-## Build to public/
+# Build
 
 ```
-> hugo -D
+> hugo
+```
+
+# Build and deploy
+
+This builds the site to `public/`, then commits and pushes the `public/`
+folder (which is a submodule to my GitHub pages repo https://github.com/andywhite37/andywhite37.github.io.  Then it commits and pushes the submodule change (and any other changes) to this `blog` repo.
+
+```sh
+> ./deploy
 ```
