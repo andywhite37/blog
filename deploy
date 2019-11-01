@@ -1,0 +1,49 @@
+#! /usr/bin/env bash
+set -euo pipefail
+
+color_green='\033[0;32m'
+color_yellow='\033[0;33m'
+color_cyan='\033[0;36m'
+color_none="\033[0m"
+
+echo_green() {
+  echo -e "${color_green}${1:-}${color_none}"
+}
+
+echo_yellow() {
+  echo -e "${color_yellow}${1:-}${color_none}"
+}
+
+echo_cyan() {
+  echo -e "${color_cyan}${1:-}${color_none}"
+}
+
+echo_command() {
+  local cmd="$1"
+  echo_yellow "$cmd"
+  eval "$cmd"
+}
+
+echo_green "Deploying updates to GitHub pages..."
+
+# TODO: clean out the public folder?
+
+# Build site to public/ (with drafts on for now)
+echo_cyan "Building site..."
+echo_command "hugo -D"
+
+# Commit and push the site to the submodule
+echo_cyan "Pushing public/ folder..."
+echo_command "cd public"
+echo_command "git add -A"
+echo_command "git commit -m 'Site deployment'"
+echo_command "git push origin master"
+
+# Now update the root repo to get the submodule ref
+echo_cyan "Updating root repo..."
+echo_command "cd .."
+echo_command "git add -A"
+echo_command "git commit -m 'Site deployment'"
+echo_command "git push"
+
+echo_green "Done!"
