@@ -307,4 +307,162 @@ the functors laws for example, and then the test framework will test that
 property or law against your implementation using a set of generated inputs
 to ensure that it passes the law in all cases.
 
-# Finally, the FUNCTOR module type
+# The FUNCTOR module type
+
+Let's acknowledge that the laws are critically important, but we're going to
+just file them away for now, and return to planet earth. Here is how you
+might **actually** define a functor as a ReasonML module type:
+
+```ocaml
+module type FUNCTOR = {
+  type t('a);
+  let map: ('a => 'b, t('a)) => t('b);
+};
+```
+
+I'm going to use all-caps for our module types to differentiate them from the
+actual implementation modules. In FP languages like Haskell, PureScript, and
+Scala (among others), this interface concept is called a "typeclass" and the
+implementation concept is called an "instance of the typeclass" or just
+"instance." So we can say that `FUNCTOR` is our "typeclass module type." You
+might notice that a typeclass is similar in concept to an OO interface, and
+it is in some ways. One key difference is that your implementation "instance"
+is a standalone module or value and is not tied to a another "host" type like
+it would be in an OO language where your functor type might `extends
+Serializable` or whatever.
+
+A few quick observations about this `FUNCTOR` typeclass - to provide an implementation
+of this "interface," we must:
+
+1. Specify a type with a single type parameter `t('a)`
+2. Provide a `map` function that conforms to the given type
+3. And we must implicitly follow the functor laws in our implementation of
+`map`, as they are not guaranteed by the types alone
+
+With this type `t('a)` and this `map` function, let's also notice that a
+`FUNCTOR` does not give you any way to put a value of type `'a` into your
+functor. It also doesn't know how to construct a value of type `'a`. Finally
+it doesn't know how to do other things like flattening a `t(t('a))` into a
+`t('a)`. All it knows how to do is map a pure function `'a => 'b` over your
+type `t('a)` to produce a value of type `t('b)`. (It can't produce values of
+type `'b` out of thin air either).
+
+# List functor
+
+Now let's implement `FUNCTOR` for `list('a)`. These implementations are purely
+for demonstration purposes, so no attempt is made to optimize anything:
+
+```ocaml
+module List = {
+  // Let's just alias our type t('a) to list('a)
+
+  type t('a) = list('a);
+
+  // This implementation is recursive, so we're using `let rec`
+
+  let rec map = (f, list) => switch(list) {
+    | [] => []
+    | [head, ...tail] => [f(head), map(f, tail)]
+  };
+
+  // Now let's define our FUNCTOR as a module:
+
+  module Functor: FUNCTOR with type t('a) = t('a) = {
+    // Here we just define the members of the FUNCTOR module type
+    // We use nonrec here so the compiler knows we're not trying to define
+    // a recursive type here, but that the t('a) on the right side refers
+    // to the t('a) defined above.
+    type nonrec t('a) = t('a);
+    let map = map;
+  };
+
+  // Another way to define this without using our `type t('a) = list('a)` alias would be:
+
+  module Functor: FUNCTOR with type t('a) = list('a) = {
+    type t('a) = list('a);
+    let map = map;
+  };
+};
+```
+
+The `with type t('a) = list('a)` business is a mechanism for exposing
+information about the types contained in our module to the outside world. To
+be honest, I'm not an expert on OCaml modules and how they interact with
+types, so I won't attempt to explain any of this, but just know that it's
+important in this case for the outside world to know that the type `t('a)`
+inside our `List.Functor` is the same type as (an alias of) `list('a)`.
+
+Now we have a module `List.Functor` which conforms to the interface defined
+by the `FUNCTOR` module type. In other words, `List.Functor` is an instance
+of the typeclass `FUNCTOR`. And in OCaml/ReasonML modules are "first-class,"
+so we can actually pass this `List.Functor` module around as a value, and use
+it in places that want to operate on `FUNCTOR`s.
+
+Also, while we are not attempting to prove that our implementation conforms
+to the functor laws above, you can kind of intuitively tell that it conforms
+to the first functor law of identity by just looking. The function is applied
+to the head value, then the function is called recursively to apply the
+function to the tail list. Nothing is being done to shuffle values around,
+copy them, etc. and if you were to pass the `id: 'a => 'a` function to our
+`map`, it's pretty clear the list would not be modified. The composition law
+is a little harder to see intuitively, so we'll just ignore it for now.
+
+# Aside on learning this
+
+Now that we've seen how to implement a `FUNCTOR` and how simple it is, I'd
+recommend trying to implement functor for some of the types below yourself -
+I found it was very helpful to learn this stuff by going through the motions
+myself, rather than just reading.
+
+# Option functor
+
+Now let's implement `FUNCTOR` for `option('a)`. I'm going to follow the convention
+of defining a wrapper module for the main type, and aliasing the type `t('a)`, then
+defining the `Functor` as a nested "submodule" of our main module.
+
+```ocaml
+module Option = {
+  type t('a) = option('a);;
+
+  // I like to implement the typeclass function as a top-level members of a module, and
+  // then just alias them insde the typeclass instance modules. The type system in OCaml
+  // is more powerful than the module system.
+
+  let map = (f, option) => switch(option) {
+    | Some(a) => Some(f(a))
+    | None => None
+  };
+
+  module Functor: FUNCTOR with type t('a) = t('a) = {
+    type nonrec t('a) = t('a); // alias above type
+    let map = map; // alias above map function
+  };
+};
+```
+
+An `option('a)` is basically a list of 0 or 1 items, so the implementation is
+super easy. Once again, the first functor law can be seen intuitively.
+
+Hopefully at this point, if functors were scary before, they are very unscary
+now. Maybe functors were never scary...
+
+# Result functor
+
+`Belt.Result.t('a, 'e)` is our first example that doesn't exactly fit the `t('a)`
+requirement of functor. We can easily implement `map` as a function, because we
+can just ignore the error `'e` case, and only map the success `'a` case, but the
+`Functor` module is not quite as straightforward.
+
+...
+
+# Function functor
+
+# Function that's not a functor
+
+# Parser/decoder functor
+
+# Future functor
+
+# Functor extensions
+
+# First-class modules
