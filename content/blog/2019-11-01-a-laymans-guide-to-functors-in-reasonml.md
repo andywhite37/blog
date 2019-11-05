@@ -314,7 +314,7 @@ property or law against your implementation using a set of generated inputs
 to ensure that it passes the law in all cases. I hope to give a more concrete
 example of this in a future blog post.
 
-# The FUNCTOR module type
+# The `FUNCTOR` typeclass (module type)
 
 Let's acknowledge that the laws are critically important, but we're going to
 just file them away for now, and return to more concrete things. Below is how
@@ -439,6 +439,13 @@ Now that we've seen how to implement a `FUNCTOR` for `list('a)` (and how easy
 it is!), I'd recommend trying to implement functor for some of the types
 below yourself - I found it was very helpful to learn this stuff by going
 through the motions myself, rather than just reading.
+
+# Array functor
+
+The `array('a)` type has a functor, but it's basically exactly the same as
+`list('a)`, so I'm going to skip over it. The only real difference is how
+`map` is implemented (just because `list('a)` and `array('a)` are different
+types), so if you want to give it a shot, go for it!
 
 # Option functor
 
@@ -581,8 +588,14 @@ purpose of this will become more clear.
 
 # Parser/decoder functor
 
+# RemoteData-like functor
+
+# Custom data type functor
+
 # Future functor
 
-# Functor extensions
+# What can you do with a `FUNCTOR`?
 
-# First-class modules
+# `FUNCTOR` extensions and operators
+
+# Using `FUNCTOR` as a first-class module
