@@ -314,7 +314,7 @@ property or law against your implementation using a set of generated inputs
 to ensure that it passes the law in all cases. I hope to give a more concrete
 example of this in a future blog post.
 
-# The `FUNCTOR` typeclass (module type)
+# The FUNCTOR typeclass (module type)
 
 Let's acknowledge that the laws are critically important, but we're going to
 just file them away for now, and return to more concrete things. Below is how
@@ -594,8 +594,8 @@ purpose of this will become more clear.
 
 # Future functor
 
-# What can you do with a `FUNCTOR`?
+# What can you do with a FUNCTOR?
 
-# `FUNCTOR` extensions and operators
+# FUNCTOR extensions and operators
 
-# Using `FUNCTOR` as a first-class module
+# Using FUNCTOR as a first-class module
