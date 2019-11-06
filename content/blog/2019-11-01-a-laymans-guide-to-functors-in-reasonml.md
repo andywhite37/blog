@@ -1153,7 +1153,7 @@ module FunctorExtensions = (F: FUNCTOR) => {
 
   let voidRight: ('b, F.t('a)) => F.t('b) => (b, fa) => F.map(_ => b, fa);
 
-  let (<$) = voidLeft;
+  let (<$) = voidRight;
 
   let flap: (F.t('a => 'b), 'a) => F.t('b) = (fs, a) => F.map(f => f(a), fs);
 };
