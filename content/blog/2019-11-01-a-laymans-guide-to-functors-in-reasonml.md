@@ -4,12 +4,16 @@ date: 2019-11-01T17:50:46-06:00
 draft: false
 ---
 
-In [my previous post](/blog/2019-10-31-hello-world) I talked about my
-background and how I started on my journey to learn typed functional
-programming. I'll again preface these posts with a note that I don't have a
-background in category theory, so these posts are intended to help introduce
-things from a boots-on-the-ground perspective. Please feel free to correct me
-on any points I've messed up.
+In [my intro post](/blog/2019-10-31-hello-world) I talked about my background
+and how I started on my journey to learn typed functional programming. I'll
+again preface these posts with a note that I don't have a background in
+category theory, so these posts are intended to help introduce things from a
+boots-on-the-ground perspective. Please feel free to correct me on any points
+I've messed up. I'm also not an OCaml expert, so there may be techniques or
+coding conventions here that are not completely correct. The purpose of these
+blogs is not to achieve rigorous perfection but to help impart some intuition
+on the topics. If you find any issues with code examples, please let me know,
+and I'll fix them.
 
 # Functors
 
@@ -81,7 +85,7 @@ posts can be seen in action in Relude, and it's underlying library
 [bs-abstract](https://github.com/Risto-Stevcev/bs-abstract), so check them
 out if you are interested. Also, I'll re-emphasize that most of the ideas in
 Relude are not our own - they come from the rich history and ecosystem of
-typed functional programming.
+typed pure functional programming.
 
 # Back to functors
 
@@ -175,15 +179,19 @@ concept, and now we use the term `int` without a second thought, knowing
 exactly what it is. I would go so far to say that something that was once
 completely unknown is now viewed by most as simple and obvious. Someone might
 have proposed that we call these things "Addables" or "Operatables" or
-whatever to give it a more semantic name, but ultimately, once you learn what
-the name denotes, the name really doesn't end up mattering anymore, and it's
-often more difficult to capture the full semantics in a single semantic name
-anyway.
+whatever to give it a more semantic (though insufficient) name, but
+ultimately, once you learn what the name denotes, the name really doesn't end
+up mattering anymore, and it's often more difficult to capture the full
+semantics in a single semantic name anyway.
 
 This is not to say that names don't matter, but it's quite common in FP for
-concepts to have abstract names, and some functions to have opaque operators
-which will require some learning and patience. It's something that you'll
-have to get used to.
+concepts to have abstract names, and for some functions to have opaque
+operators. This will require some learning and patience, and it's just
+something you'll have to get used to. That said, I've experienced the
+firehose of unknown words, so I'm not trying to brush this off, but just
+trying to set expectations. Just remember, you don't have to understand all
+of this at once! Just to try build up, cement, and apply your knowledge over
+time, and it will grow.
 
 # Functor laws
 
@@ -582,8 +590,8 @@ purpose of this will become more clear.
 
 # Tree functor
 
-Now let's try another data type: a binary tree.  Using recursion fo `map` makes this
-very similar to `list('a)`, so I'll just jump into the example:
+Now let's try another data type: a binary tree. Using recursion with `map`
+makes this very similar to `list('a)`, so I'll just jump into the example:
 
 ```ocaml
 module Tree = {
@@ -601,14 +609,19 @@ module Tree = {
 };
 ```
 
+Our `Tree` is a variant that's either a `Leaf` (empty tree), or it's `Node`
+which has a value of type `'a`, and a sub-tree on the left side, and a
+sub-tree on the right side. A tree with one value would be `Node(Leaf,
+myValue, Leaf)`.
+
 The `map` function just recurses down the left and right branches of the
-tree, and the value at each node is updated with `f` too.  As you can see
-we're not modifying the structure of the tree - just visiting the value
-at each node.
+tree, and the value at each node is updated with `f`. As you can see we're
+not modifying the structure of the tree - just visiting (and updating) the
+value at each node with the pure function `'a => 'b`.
 
-# RemoteData-like functor
+# RemoteData functor
 
-We've now seen functors for some commonly-used, generic data types, but you
+We've now seen functors for some commonly-used, general data types, but you
 can also define functors for more domain-specific types. Let's look at the
 Elm
 [RemoteData](https://package.elm-lang.org/packages/krisajenkins/remotedata/latest/)
@@ -638,10 +651,11 @@ is the custom error type, which might be a string, or a more specific variant or
 record type.
 
 The type is similar to `Result.t('a, 'e)` in that it has two type parameters,
-so the function implementation is going to look very similar. The `NotAsked`
-and `Loading` constructors carry no data, so they will just pass through untouched
-in the `map` function. Our map function operates on the `Success('a)` channel, so
-the `Failure('e)` value will also get passed through untouched:
+so the functor implementation is going to look very similar. The `NotAsked`
+and `Loading` constructors carry no data, so they will just pass through
+untouched in the `map` function. Our map function operates on the
+`Success('a)` channel, so the `Failure('e)` value will also get passed
+through untouched:
 
 ```ocaml
 module RemoteData = {
@@ -704,6 +718,14 @@ serves as the "main" or "success" value of the type, and the other type
 params maybe serve as supporting types. Another clue is whether your type is
 a data structure that carries some single type of data - in this case your
 type is almost certainly a functor.
+
+You might also find that your data type has multiple values that make sense
+to map, and in these cases you might have a **bifunctor**, **trifunctor**,
+**quadfunctor**, etc. These are all basically just types that allow you to
+map more than one of the polymorphic types, assuming you can still abide by
+the functor laws. The rule of thumb with FP is that someone has likely
+already figured it out, named it, and fully-implemented it, so if you think
+you've found something interesting, look for prior art.
 
 # Function functor
 
@@ -786,7 +808,13 @@ module Function = {
 };
 ```
 
-# Function that's not a functor
+If this seems a little silly to you, it is - it's stupid simple, but it turns
+out that the function `'x => 'a` is actually a very powerful and useful
+construct, especially when we get to the topic of monads. If you want to read
+ahead, search for [reader
+monad](https://www.google.com/search?q=reader+monad).
+
+# Function that's not a (covariant) functor
 
 We just looked at the function `'x => 'a`, so what about the function `'a =>
 'x`? Let's quickly see if we can implement map for this type:
@@ -807,7 +835,7 @@ this for now, and hope to in a future blog post, but the reason for this has
 to do with [covariance vs. contravariance](https://en.wikipedia.org/wiki/Functor#Covariance_and_contravariance).
 The `FUNCTOR` we defined above with the `let map: ('a => 'b, t('a)) => t('b)` function
 is called a **covariant** functor, but the functor that we need for the type `'a => 'x`
-is called a **Contravariant** functor, which looks like this:
+is called a **contravariant** functor, which looks like this:
 
 ```ocaml
 module type CONTRAVARIANT = {
@@ -828,7 +856,7 @@ So now we've seen `FUNCTOR` for `'x => 'a` (and mentioned `CONTRAVARIANT` for
 let's see a real-world example of a covariant `FUNCTOR` for a function.
 
 What about a function that takes a `Js.Json.t` value, and "decodes" it into
-a type like `Result.t(string, Error.t)`
+a type like `Result.t('a, Error.t)`
 
 ```ocaml
 module Decoder = {
@@ -1038,12 +1066,13 @@ module Future = {
 ```
 
 I've changed the `map` function a little from the real implementation to try
-to help with clarify. Basically, the `map` function takes a `Future.t('a)`
-and waits for that future to be resolved, and to be notified of this via the
-`onDoneA` callback. It wraps this inside a new `Future.make(resolveB => ...)`
-which is the function we're supposed to call when we have a value of type
-`'b`. So when we get the `'a` from `onDoneA`, we convert it to `'b` with our
-`'a => 'b` function and tell the `Future.t('b)` that we're done.
+to help with clarity. Basically, the `map` function takes a `Future.t('a)`
+and waits for that future to be resolved. We are notified when it resolves
+via the `onDoneA` callback. We wrap all this inside a new
+`Future.make(resolveB => ...)`. `resolveB` is the function we're supposed to
+call when we have a value of type `'b`. So when we get the `'a` from
+`onDoneA`, we convert it to `'b` with our `'a => 'b` function and tell the
+`Future.t('b)` that we're done by calling `resolveB`.
 
 I'll just leave it at that for now, but you can dig in further by cloning the
 [RationalJS/future](https://github.com/RationalJS/future) repo and trying it
@@ -1056,19 +1085,19 @@ computation. To represent a computation that can fail, you should use
 that can represent both successful and failed computations.
 
 Compared to `Js.Promise.t`, which hides the error type in some opaque (and
-disgusting, if you ask me) unknown type, the `Future` approach makes both the
+offensive, if you ask me) abstract type, the `Future` approach makes both the
 successful value and the error value "first-class" - you have full control
 over whether and how your async work can fail.
 
 # What can you do with a FUNCTOR?
 
 There are lots of `FUNCTOR`s in the wild, and you probably use `map` on a
-daily basis, but `FUNCTOR` is not the most powerful abstraction. You
-basically use a `FUNCTOR` when you have some data structure or context and
-you want to modify the values inside the structure/context without affecting
-the structure itself.
+daily basis, but `FUNCTOR` is not the most powerful abstraction in the world
+of functional programming. You basically use a `FUNCTOR` when you have some
+data structure or context and you want to modify the values inside the
+structure/context without affecting the structure itself.
 
-The fact that all a function knows about is a type `t('a)` and a `map`
+The fact that all a functor knows about is a type `t('a)` and a `map`
 function is actually a good thing - it gives you a set of well-defined tools
 and constraints, but allows you to abstract over those capabilities, and
 provides you with a principled baseline on which to create more powerful
@@ -1156,17 +1185,18 @@ let units: list(unit) = [1, 2 ,3] |> void;
 `voidLeft` is a function that takes a functor of `'a` and a `'b` value, and
 just sticks the `'b` value in the functor regardless of what `'a` value is in
 there. `$>` is the operator version of `voidLeft`. You can think of the
-operator as doing what looks like a `<$>`/`map`, but it's just pointint at
-the value it's going to use to replace all the values of the functor.
-`voidLeft` is not a great name for this as it's not voiding like `void` does,
-but rather putting a fixed value in, but oh well.
+operator as doing what looks like - half of a `<$>`/`map`, but it's just
+pointing at the value it's going to use to replace all the values of the
+functor. `voidLeft` is not a great name for this as it's not voiding like
+`void` does, but rather putting a fixed value in, but oh well.
 
 ```ocaml
 let hi3Times: list(string) = [1, 2 ,3] $> "hi";
 ```
 
 `voidRight` is the same as `voidLeft` but with the args flipped. `<$` is the
-operator version of this - you can think of `<$` similarly to `$>`.
+operator version of this - you can think of `<$` similarly to `$>` - the
+arguments are just in the opposite order (i.e. "flipped").
 
 ```ocaml
 let hi3Times: list(string) = "hi" <$ [1, 2 ,3];
@@ -1209,7 +1239,8 @@ types](https://discuss.ocaml.org/t/higher-kinded-polymorphism/2192) like
 easy/possible to write a function that expects an arbitrary `FUNCTOR` as an
 argument. There are other techniques (like [Lightweight Higher-Kinded
 Polymorphism](https://www.cl.cam.ac.uk/~jdy22/papers/lightweight-higher-kinded-polymorphism.pdf)
-for encoding higher-kinded types in OCaml, so this might not be true across
+for encoding higher-kinded types in OCaml, but I'm not as familiar with the
+techniques described there, so these restrictions might not be true across
 the board (or at all!).
 
 # Conclusion
@@ -1223,4 +1254,4 @@ about more focused topics in the future.
 
 I hope you enjoyed! If I don't have comments setup in my blog when you read
 this, and you have a comment, feel free to open an issue (or pull request)
-here: https://github.com/andywhite37/blog).
+here: https://github.com/andywhite37/blog.
