@@ -8,6 +8,9 @@ enableRobotsTXT = true
 paginate = 20
 canonifyurls = true
 
+# Google Analytics
+googleAnalytics = "UA-151733054-1"
+
 # Code blocks
 pygmentsCodeFences = true
 pygmentsCodeFencesGuessSyntax = true
