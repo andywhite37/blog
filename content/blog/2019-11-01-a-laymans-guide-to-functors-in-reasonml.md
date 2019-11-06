@@ -582,20 +582,645 @@ purpose of this will become more clear.
 
 # Tree functor
 
-# Function functor
+Now let's try another data type: a binary tree.  Using recursion fo `map` makes this
+very similar to `list('a)`, so I'll just jump into the example:
 
-# Function that's not a functor
+```ocaml
+module Tree = {
+  type t('a) = | Leaf | Node(t('a), 'a, t('a));
 
-# Parser/decoder functor
+  let rec map = (f, tree) => switch(tree) {
+    | Leaf => Leaf
+    | Node(left, value, right) => Node(map(f, left), f(value), map(f, right))
+  };
+
+  module Functor: FUNCTOR with type t('a) = t('a) = {
+    type nonrec t('a) = t('a);
+    let map = map;
+  };
+};
+```
+
+The `map` function just recurses down the left and right branches of the
+tree, and the value at each node is updated with `f` too.  As you can see
+we're not modifying the structure of the tree - just visiting the value
+at each node.
 
 # RemoteData-like functor
 
+We've now seen functors for some commonly-used, generic data types, but you
+can also define functors for more domain-specific types. Let's look at the
+Elm
+[RemoteData](https://package.elm-lang.org/packages/krisajenkins/remotedata/latest/)
+type, which also exists as a ReasonML library
+[bs-remotedata](https://github.com/FabienHenon/bs-remotedata).
+
+The type in question basically looks like the following:
+
+```ocaml
+module RemoteData = {
+  type t('a, 'e) =
+    | NotAsked
+    | Loading
+    | Failure('e)
+    | Success('a);
+};
+```
+
+This type is a variant that's used to represent the different states in which
+an asynchronous data fetch operation might exist. E.g. the `NotAsked` state
+is typically used as the initial state where there's no data, and a request
+has not yet been made. Before the async `fetch` request is made, the state
+might be updated to `Loading` to indicate that there is work happening. When data
+comes in, the state is set to `Success('a)`, where `'a` is the data value that
+came in, and if the request fails, the state is set to `Failure('e)` where `'e`
+is the custom error type, which might be a string, or a more specific variant or
+record type.
+
+The type is similar to `Result.t('a, 'e)` in that it has two type parameters,
+so the function implementation is going to look very similar. The `NotAsked`
+and `Loading` constructors carry no data, so they will just pass through untouched
+in the `map` function. Our map function operates on the `Success('a)` channel, so
+the `Failure('e)` value will also get passed through untouched:
+
+```ocaml
+module RemoteData = {
+  type t('a, 'e) =
+    | Init
+    | Loading
+    | Failure('e)
+    | Success('a);
+
+  let map = (f, remoteData) => switch(remoteData) {
+    | Init => Init
+    | Loading => Loading
+    | Failure(e) => Failure(e)
+    | Success(a) => Success(f(a))
+  };
+};
+```
+
+To define the `FUNCTOR` module, we have to use the module functor trick like we did for
+`Result` to lock in the error type. This time I'll show another technique to do this:
+
+```ocaml
+module RemoteData = {
+  type t('a, 'e) = ...
+  let map = ...
+
+  module WithError = (E: TYPE) => {
+    module Functor: FUNCTOR with type t('a) = t('a, E.t) = {
+      type t('a) = t('a, E.t);
+      let map = map;
+    };
+
+    // You can use E and E.t for more things in here if you need to...
+  };
+};
+```
+
+This time, I'm using a `WithError` module functor that locks in the error
+type in `E.t` and then we define the `Functor` module within the `WithError`
+module. Doing it this way allows you to use the `E` error module multiple
+times within the same scope without having to functorize every module that
+needs to use `E`. E.g. when we start to add more typeclass instances, it's
+handy to just "functorize" once `WithError`, and then just define all the
+other instances normally with `E.t`. Beware that module functors are not
+without their costs in ocaml (in module purity, dead code elimination, etc.),
+so sometimes it's better to use more smaller functors, rather than fewer
+larger functors.
+
 # Custom data type functor
+
+As we've seen with `RemoteData.t('a, 'e)` you can define functors for your
+own domain types, not just the common data types like `list('a)`,
+`option('a)`, etc. As you do more functional programming, you'll also start
+to see functors used in other new and exciting places, like free monads, etc.
+
+When you're making your own polymorphic types, it's worth thinking about
+whether a `FUNCTOR` (i.e. a `map` function) might make sense for your data
+type. One clue is if your data type has one type parameter that sort of
+serves as the "main" or "success" value of the type, and the other type
+params maybe serve as supporting types. Another clue is whether your type is
+a data structure that carries some single type of data - in this case your
+type is almost certainly a functor.
+
+# Function functor
+
+Now let's look at something that's not just a plain old static data type: a
+function! Let's consider the function `'x => 'a` where `'x` is some type we
+don't really care about, and `'a` is the type we care about (sort of like in
+`Result.t('a, 'e)` where we cared about the `'a`, and not so much about the
+`'e` for the purposes of our functor).
+
+Recall the type of `map`:
+
+```ocaml
+let map: ('a => 'b, t('a)) => t('b);
+```
+
+For our function, we can define our type like this:
+
+```ocaml
+module Function = {
+  type t('x, 'a) = 'x => 'a;
+};
+```
+
+Now let's try implementing map:
+
+```ocaml
+module Function = {
+  type t('x, 'a) = 'x => 'a;
+
+  // ('a => 'b, t('a)) => t('b)
+  let map: ('a => 'b, 'x => 'a) => ('x => 'b) = (aToB, xToA) => {
+    // We need to return a function of type 'x => 'b, so we know we have an argument
+    // of type 'x, and a function from 'x => 'a, and a function from 'a => 'b, so we
+    // just call those functions to convert x -> a -> b:
+
+    x => aToB(xToA(x));
+  };
+};
+```
+
+If you recall above in the functor laws section, we implemented a function
+for composing function `andThen` which looked at lot like this, and there is
+also a function called `compose` which does the same thing, with the
+arguments flipped.
+
+```ocaml
+let andThen: ('a => 'b, 'b => 'c) => ('a => 'c) = (aToB, bToC) => {
+  a => bToC(aToB(a))
+};
+
+let (>>) = andThen;
+
+let compose: ('b => 'c, 'a => 'b) => ('a => 'c) = (bToC, aToB) => {
+  a => bToC(aToB(a))
+};
+
+let (<<) = compose;
+```
+
+It turns out the functor for the function `'x => 'a` is just the same thing
+as function composition!
+
+Now to implement our actual `Functor` module, we again have to use a module functor
+because we're dealing with a type `t('x, 'a)` which has more than one type parameter.
+I'll use the `With*` module functor trick again, but you could also do this in
+the `module MakeFunctor = (E: TYPE) => { type t('a) = ... }` style.
+
+```ocaml
+module Function = {
+  type t('x, 'a) = 'x => 'a;
+
+  let map = (aToB, xToA) => x => aToB(xToA(x));
+
+  module WithArgument = (X: TYPE) => {
+    module Functor: FUNCTOR with type t('a) = t(X.t, 'a) = {
+      type t('a) = t(X.t, 'a);
+      let map = map;
+    };
+  };
+};
+```
+
+# Function that's not a functor
+
+We just looked at the function `'x => 'a`, so what about the function `'a =>
+'x`? Let's quickly see if we can implement map for this type:
+
+```ocaml
+module Function = {
+  type t('a, 'x) = 'a => 'x;
+
+  let map: ('a => 'b, 'a => 'x) => ('b => 'x) = (aToB, aToX) => {
+    // Need to return a function 'b => 'x
+    b => ??? huh ???
+  };
+};
+```
+
+It turns out we can't implement our `FUNCTOR` for this type. I won't get into
+this for now, and hope to in a future blog post, but the reason for this has
+to do with [covariance vs. contravariance](https://en.wikipedia.org/wiki/Functor#Covariance_and_contravariance).
+The `FUNCTOR` we defined above with the `let map: ('a => 'b, t('a)) => t('b)` function
+is called a **covariant** functor, but the functor that we need for the type `'a => 'x`
+is called a **Contravariant** functor, which looks like this:
+
+```ocaml
+module type CONTRAVARIANT = {
+  type t('a);
+  let contramap: ('b => 'a, t('a)) => t('b); // sometimes called cmap
+};
+```
+
+If you try to implement `CONTRAVARIANT` for types like `option('a)` you're
+going to get confused, just like we got confused trying to implement our
+covariant `FUNCTOR` for `'a => 'x`. Try implementing `CONTRAVARIANT` for `'a
+=> 'x` though, and think about function composition again.
+
+# Parser/decoder functor
+
+So now we've seen `FUNCTOR` for `'x => 'a` (and mentioned `CONTRAVARIANT` for
+`'a => 'x`, but we won't mention `CONTRAVARIANT` again in this article), so
+let's see a real-world example of a covariant `FUNCTOR` for a function.
+
+What about a function that takes a `Js.Json.t` value, and "decodes" it into
+a type like `Result.t(string, Error.t)`
+
+```ocaml
+module Decoder = {
+  module Error = {
+    type t = | ExpectedString | Other;
+  };
+
+  type t('a) = | Decode(Js.Json.t => Result.t('a, Error.t));
+};
+```
+
+Here our `Decoder.t('a)` is a data type that wraps a function `Js.Json.t =>
+Result.t('a, Error.t))`. I'll fix the error type for simplicity, but you could
+use a polymorphic error if you want (by using the module functor `TYPE` trick).
+
+If you squint, the function `Js.Json.t => Result.t('a, Error.t))` looks a lot
+like the function `'x => 'a`, where `'x` is the type we don't really care
+about in terms of mapping (the `Js.Json.t` value), and our `'a` is just
+buried in a `Result`.
+
+Let's try implementing `map`:
+
+```ocaml
+module Decoder = {
+  module Error = {
+    type t = | ExpectedString | Other;
+  };
+
+  type t('a) = | Decode(Js.Json.t => Result.t('a, Error.t));
+
+  // Our map function needs to return a new decoder `Decode(Js.Json.t => Result.t('b, Error.t))`:
+
+  let map: ('a => 'b, t('a)) => t('b) = (aToB, Decode(jsonToResultA)) => {
+    Decode(json => jsonToResultA(json) |> Result.map(aToB));
+  };
+};
+```
+
+Here we're returning a new decode function wrapped in our `Decode`
+constructor. The new function accepts a `Js.Json.t` argument, and calls our
+original decode function to get the `Result.t('a, 'e)`, then we use the
+`Result.map` function to map the `'a` value in the `Result` to the `'b` value
+that we want in the end. Since we're dealing with functions here, nothing has
+actually done anything yet - no decoders have been run - we are just left
+with a new function that accepts a `Js.Json.t` and now gives us a
+`Result.t('b, Error.t)`. Stuff like this is where we start to see the real
+power of functional programming - just composing pure functions to describe
+how to do the work, then doing the work separately.
+
+As a side note, I didn't have to use the `Decode` wrapper for out `t('a)` above -
+you can just define your type as just an alias for a function like this:
+
+```ocaml
+type t('a) = Js.Json.t => Result.t('a, Error.t);
+```
+
+But it's often useful to wrap functions in some type of "container" or
+"context" and it also helps to envision our decoder as a more opaque
+"context", rather than just a loose function. You can however do all this
+without the wrapper context.
+
+Let's see how this works in reality. We'll implement a boolean decoder, then
+map the value to a string:
+
+```ocaml
+module Decoder = {
+  module Error = {
+    type t =
+      | ExpectedBool(Js.Json.t)
+      | OtherError;
+  };
+
+  type t('a) =
+    | Decode(Js.Json.t => Result.t('a, Error.t));
+
+  let map: ('a => 'b, t('a)) => t('b) =
+    (aToB, Decode(jsonToResultA)) =>
+      Decode(json => jsonToResultA(json) |> Result.map(aToB));
+
+  let run: (Js.Json.t, t('a)) => Result.t('a, Error.t) =
+    (json, Decode(f)) => f(json);
+
+  let boolean: t(bool) =
+    Decode(
+      json =>
+        switch (Js.Json.classify(json)) {
+        | JSONTrue => Ok(true)
+        | JSONFalse => Ok(false)
+        | _ => Error(ExpectedBool(json))
+        },
+    );
+
+  // Define string, float, int, obj, array, etc. decoders
+};
+
+Js.log(
+  Decoder.boolean
+  |> Decoder.map(v => v ? "it was true" : "it was false")
+  |> Decoder.run(Js.Json.boolean(true)),
+);
+
+Js.log(
+  Decoder.boolean
+  |> Decoder.map(v => v ? "it was true" : "it was false")
+  |> Decoder.run(Js.Json.boolean(false)),
+);
+
+Js.log(
+  Decoder.boolean
+  |> Decoder.map(v => v ? "it was true" : "it was false")
+  |> Decoder.run(Js.Json.string("hi")),
+);
+```
+
+This logs:
+
+```ocaml
+["it was true"]
+["it was false"]
+[["hi"]]
+```
+
+To break this down:
+
+1. We have our type `Decoder.t('a)` which is basically a (wrapped) function
+from `Js.Json.t => Result.t('a, Error.t)`
+1. I added a `Decoder.run` function. Since our decoder is basically a
+function, it makes sense that we'll need to call the function at some point,
+but passing in a `Js.Json.t` value to decode. The `run` function basically
+just de-structures our decode function and passes the `Js.Json.t` value to it
+to produce the `Result.t('a, Error.t)`
+    - This is a common pattern in functional programming to build up some
+    data structure (which might include functions), and provide a way to
+    "run" it. Normally, you build up the structure, and then you can pass
+    around and reuse the the structure (because it's pure, and hasn't
+    actually done anything yet), and then you just run it when you're ready
+    for it to do its thing.
+1. I added a `Decoder.boolean` function which is a decoder that succeeds if
+the given `Js.Json.t` value is a boolean, and fails if it's not a boolean. 1.
+At the bottom, I'm setting up my decoder to expect to parse a boolean (using
+`Decoder.boolean`), then I'm mapping my `Decoder` to convert the `bool` to a
+`string`, then finally, I'm running the decoder with a few test values
+(`true`, `false`, and `"hi"`), to see what happens. The `true` and `false`
+cases log the expected strings from the `map`, and the `"hi"` case fails.
+    - the `[["hi"]]` is just the JS representation of my
+    `ExpectedBool(Js.Json.t)` error.
+
+You can write other decoders or parsers like this, and do simple things like
+parsing a single value and mapping it with a `FUNCTOR`, but to decode/parse
+structures like JSON object and arrays, you'll want to use more powerful
+abstractions like `Applicative` and `Monad`, which I hope to write a blog
+about soon.
 
 # Future functor
 
+Let's look at one more real-world example of a `FUNCTOR` - the `Future` type
+from [RationalJS/future](https://github.com/RationalJS/future).
+
+If you've done any amount of ReasonML, you've probably had to deal with
+`Js.Promise.t('a)`, and I suspect you've not enjoyed it (or maybe you're just
+accustomed to the pain if you're coming from JavaScript). I hope to write a
+blog in the future about why `Js.Promise.t` is not great in ReasonML, and
+what you should use instead, but for now we'll just look at `Future` in terms
+of implementing `FUNCTOR`.
+
+`Future` is similar to `Js.Promise.t` in that it's a async "effect" type -
+it's a data type that represents a computation that will complete sometime in
+the future. The
+[Future](https://github.com/RationalJS/future/blob/master/src/Future.re) type
+looks like this:
+
+```ocaml
+type getFn('a) => ('a => unit) => unit;
+
+type t('a) = | Future(getFn('a));
+```
+
+`getFn` might look odd, but all it is is a function that takes a callback `'a
+=> unit` as it's only argument - this callback is often called `resolve`.
+
+The `Future` implementation basically creates a function that closes over a
+mutable list of "subscribers", and when things subscribe to the `Future`, it
+adds those listeners to the array, to be notified when the `Future` is
+resolved.
+
+Let's ignore all that and see if we can just implement `map` for `Future`.
+Let's pretend that we have a `Future.make` function that takes our resolver, and
+would be used like this:
+
+```ocaml
+Future.make(resolve => Js.Global.setTimeout(() => resolve("hi"), 40));
+```
+
+
+```ocaml
+module Future = {
+  type getFn('a) => ('a => unit) => unit;
+
+  type t('a) = | Future(getFn('a));
+
+  let make = ...;
+
+  let map: ('a => 'b, t('a)) => t('b) =
+    (aToB, Future(onDoneA)) =>
+      make(resolveB => onDoneA(a => resolveB(aToB(a))));
+};
+```
+
+I've changed the `map` function a little from the real implementation to try
+to help with clarify. Basically, the `map` function takes a `Future.t('a)`
+and waits for that future to be resolved, and to be notified of this via the
+`onDoneA` callback. It wraps this inside a new `Future.make(resolveB => ...)`
+which is the function we're supposed to call when we have a value of type
+`'b`. So when we get the `'a` from `onDoneA`, we convert it to `'b` with our
+`'a => 'b` function and tell the `Future.t('b)` that we're done.
+
+I'll just leave it at that for now, but you can dig in further by cloning the
+[RationalJS/future](https://github.com/RationalJS/future) repo and trying it
+out for yourself.
+
+As a side note, this `Future.t('a)` differs from `Js.Promise.t('a)` in that
+the `Future.t('a)` cannot fail - it has no way to represent a failed async
+computation. To represent a computation that can fail, you should use
+`Future.t(Result.t('a, 'e))` - in this case your future value is just a type
+that can represent both successful and failed computations.
+
+Compared to `Js.Promise.t`, which hides the error type in some opaque (and
+disgusting, if you ask me) unknown type, the `Future` approach makes both the
+successful value and the error value "first-class" - you have full control
+over whether and how your async work can fail.
+
 # What can you do with a FUNCTOR?
+
+There are lots of `FUNCTOR`s in the wild, and you probably use `map` on a
+daily basis, but `FUNCTOR` is not the most powerful abstraction. You
+basically use a `FUNCTOR` when you have some data structure or context and
+you want to modify the values inside the structure/context without affecting
+the structure itself.
+
+The fact that all a function knows about is a type `t('a)` and a `map`
+function is actually a good thing - it gives you a set of well-defined tools
+and constraints, but allows you to abstract over those capabilities, and
+provides you with a principled baseline on which to create more powerful
+abstractions, like `Applicative`, `Monad` and all sorts of other stuff.
 
 # FUNCTOR extensions and operators
 
+Higher-level constructs like `FUNCTOR` let you implement functions from a
+higher-level of abstraction. In other words, rather than implementing
+map-related functions for each of `list('a)`, `option('a)`, `Result.t('a,
+'e)`, etc., we can implement the function once for `FUNCTOR`, and then all of
+the modules we have that have an instance of `FUNCTOR` get those functions
+"for free", because these extensions are all implemented just in terms of
+`FUNCTOR` (i.e. `t('a)` and `map`).
+
+This is a contrived example, but say you had some data structures like lists,
+options, trees, etc., and you needed to convert some data from one type to
+another across all these structures. You can setup a `FunctorExtensions`
+module functor that lets you define this function once, and can be used by
+anything that has a `Functor: FUNCTOR` module.
+
+```ocaml
+module FunctorExtensions = (F: FUNCTOR) => {
+  let doSomething: F.t('a) => F.t('b) = fa => F.map(someComplexMappingFunction, fa);
+
+  let doAnother: F.t('a) => F.t('b) = fa => F.map(anotherThing, fa);
+
+  // other stuff?
+};
+```
+
+This is obviously not super compelling, because you can just use `map` on
+your types, and pass in the mapping functions without this, but it's just an
+example of abstracting on `FUNCTOR`. Also, `FUNCTOR` is again not a super
+powerful abstraction, so the benefits of this will be more clear with things
+like `Foldable` or `Monad` which I hope to blog about later.
+
+Another use of this `FunctorExtension` technique is to add some common helper
+functions and operators to anything that has a `FUNCTOR` instance. There are a few common
+functions that other FP languages provide for functors:
+
+```ocaml
+module FunctorExtensions = (F: FUNCTOR) => {
+  let (<$>) = F.map;
+
+  let (<#>) = (fa, f) => F.map(f, fa);
+
+  let void: F.t('a) => F.t(unit) = fa => F.map(_ => (), fa);
+
+  let voidLeft: (F.t('a), 'b) => F.t('b) => (fa, b) => F.map(_ => b, fa);
+
+  let ($>) = voidLeft;
+
+  let voidRight: ('b, F.t('a)) => F.t('b) => (b, fa) => F.map(_ => b, fa);
+
+  let (<$) = voidLeft;
+
+  let flap: (F.t('a => 'b), 'a) => F.t('b) = (fs, a) => F.map(f => f(a), fs);
+};
+```
+
+`<$>` is the operator version of the `map` function, taken from languages like Haskell.  You use it like this:
+
+```ocaml
+let b: option('b) = aToB <$> Some(a);
+```
+
+`<#>` is the flipped version of `map`, used like this:
+
+```ocaml
+let b: option('b) = Some(a) <#> aToB;
+```
+
+`void` is a function that basically replaces all the values in your functor
+with the `unit` value `()`. This is the type of thing that might seem odd,
+but you often run into situations where you just need to throw away some data
+in FP, or convert a type into something that indicates that you don't care
+what it is. `void` is a commonly-used name in FP for something that "clears
+out" a value by setting it to the `unit` value `()`.
+
+```ocaml
+let units: list(unit) = [1, 2 ,3] |> void;
+```
+
+`voidLeft` is a function that takes a functor of `'a` and a `'b` value, and
+just sticks the `'b` value in the functor regardless of what `'a` value is in
+there. `$>` is the operator version of `voidLeft`. You can think of the
+operator as doing what looks like a `<$>`/`map`, but it's just pointint at
+the value it's going to use to replace all the values of the functor.
+`voidLeft` is not a great name for this as it's not voiding like `void` does,
+but rather putting a fixed value in, but oh well.
+
+```ocaml
+let hi3Times: list(string) = [1, 2 ,3] $> "hi";
+```
+
+`voidRight` is the same as `voidLeft` but with the args flipped. `<$` is the
+operator version of this - you can think of `<$` similarly to `$>`.
+
+```ocaml
+let hi3Times: list(string) = "hi" <$ [1, 2 ,3];
+```
+
+Finally, `flap` is a strange function that takes a functor of functions and a
+single value, and applies those functions to the single value to
+"re-populate" the functor with the values produced.
+
+To get access to these extensions, you'd do something like this:
+
+```ocaml
+module Option = {
+  type t('a) = ...;
+
+  module Functor: FUNCTOR with type t('a) = t('a) = { ... };
+  module FunctorExt = FunctorExtensions(Functor);
+
+  // Optionally `include` the extensions directly in your module:
+  include FunctorExt;
+};
+```
+
+With infix operators, it often best to silo them off into their own module,
+suitable for use as a local open.
+
+The extensions and infix technique is used extensively in `Relude` - see
+[Relude_Extensions_Functor](https://github.com/reazen/relude/blob/master/src/extensions/Relude_Extensions_Functor.re)
+and it's use in
+[Relude_Option](https://github.com/reazen/relude/blob/master/src/Relude_Option.re)
+(both the Extensions and Infix modules), and many other modules.
+
 # Using FUNCTOR as a first-class module
+
+ReasonML/OCaml supports the concept of [first-class
+modules](https://v1.realworldocaml.org/v1/en/html/first-class-modules.html),
+but I don't believe you can use [higher-kinded
+types](https://discuss.ocaml.org/t/higher-kinded-polymorphism/2192) like
+`FUNCTOR` in first class modules, so unfortunately, I don't think it's
+easy/possible to write a function that expects an arbitrary `FUNCTOR` as an
+argument. There are other techniques (like [Lightweight Higher-Kinded
+Polymorphism](https://www.cl.cam.ac.uk/~jdy22/papers/lightweight-higher-kinded-polymorphism.pdf)
+for encoding higher-kinded types in OCaml, so this might not be true across
+the board (or at all!).
+
+# Conclusion
+
+Well, that was an extremely long blog post, but I hope it will help plant
+some seeds for someone who might just be starting their FP journey. I hope to
+follow-up this post with a blog about `Applicatives` and then one about
+`Monads`, and then go from there. I want to write these longer fundamental
+posts so I have something to refer back to when I want to write smaller blogs
+about more focused topics in the future.
+
+I hope you enjoyed! If I don't have comments setup in my blog when you read
+this, and you have a comment, feel free to open an issue (or pull request)
+here: https://github.com/andywhite37/blog).
