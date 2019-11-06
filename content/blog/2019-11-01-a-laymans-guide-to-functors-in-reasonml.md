@@ -1243,6 +1243,29 @@ for encoding higher-kinded types in OCaml, but I'm not as familiar with the
 techniques described there, so these restrictions might not be true across
 the board (or at all!).
 
+As an example, it would be cool if you could do this:
+
+```ocaml
+// This doesn't work, or at least I can't get it to work!
+
+let emphasize = (functor: (module FUNCTOR with type t('a) = t(string)), fa: t(string)) => {
+  module Functor = (val functor);
+  Functor.map(a => a ++ "!", fa);
+};
+
+emphasize((module List.Functor), ["hello", "goodbye"]); // ["hello!", "goodbye!"] :pray:
+emphasize((module Option.Functor), Some("hello"));      // Some("hello!") :pray:
+emphasize((module Result.Functor), Ok("hi"));           // Ok("hi!") :pray:
+```
+
+Basically create a function that can work on any `FUNCTOR` without having to
+specialize it for each instance, but sadly, I don't think this is possible in
+OCaml, because of its lack of higher-kinded types.
+
+This technique does however work for typeclasses that operate on
+non-polymorphic types, like `TYPE`, `SHOW` or `EQ` (which will hopefully be
+covered in another blog post).
+
 # Conclusion
 
 Well, that was an extremely long blog post, but I hope it will help plant
