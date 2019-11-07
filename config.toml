@@ -30,7 +30,7 @@ enableEmoji = true
 # hugo-coder theme settings
 [params]
   author = "Andy White"
-  info = "I'm a full stack developer and a big fan of typed functional programming!"
+  info = "Hello, my name is Andy. Welcome to my personal website!"
   description = "Andy White's personal website"
   keywords = "blog,tech,developer,software,personal"
   avatarurl = "images/andy.jpeg"
@@ -58,6 +58,17 @@ enableEmoji = true
   icon = "fab fa-twitter fa-2x"
   weight = 2
   url = "https://twitter.com/whitehouse3001"
+[[params.social]]
+  name = "Facebook"
+  icon = "fab fa-facebook fa-2x"
+  weight = 2
+  url = "https://facebook.com/andywhite2"
+[[params.social]]
+  name = "LinkedIn"
+  icon = "fab fa-linkedin fa-2x"
+  weight = 3
+  url = "https://linkedin.com/in/andywhitesoftwaredeveloper"
+
 [[menu.main]]
   name = "Blog"
   weight = 1
