@@ -2,6 +2,8 @@
 title: "A Layman's Guide to Functors in ReasonML"
 date: 2019-11-01T17:50:46-06:00
 draft: false
+categories: ["Software Development", "Functional Programming"]
+tags: ["ReasonML", "OCaml", "Functors", "Layman's Guide"]
 ---
 
 In [my intro post](/posts/2019-10-31-hello-world) I talked about my background

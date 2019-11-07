@@ -3,7 +3,7 @@ title: "Hello World"
 date: 2019-10-31T21:11:53-06:00
 draft: false
 categories: ["Software Development", "Functional Programming"]
-tags: ["ReasonML", "OCaml", "Functors"]
+tags: ["Rambling"]
 ---
 
 The world of typed functional programming is a vast, mind-blowing, and often
