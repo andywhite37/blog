@@ -4,7 +4,7 @@ date: 2019-11-01T17:50:46-06:00
 draft: false
 ---
 
-In [my intro post](/blog/2019-10-31-hello-world) I talked about my background
+In [my intro post](/posts/2019-10-31-hello-world) I talked about my background
 and how I started on my journey to learn typed functional programming. I'll
 again preface these posts with a note that I don't have a background in
 category theory, so these posts are intended to help introduce things from a

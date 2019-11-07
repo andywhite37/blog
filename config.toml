@@ -11,6 +11,9 @@ canonifyurls = true
 # Google Analytics
 googleAnalytics = "UA-151733054-1"
 
+# Disqus
+disqusShortname = "andywhite-xyz"
+
 # Code blocks
 pygmentsCodeFences = true
 pygmentsCodeFencesGuessSyntax = true
@@ -29,7 +32,7 @@ enableEmoji = true
   author = "Andy White"
   info = "I'm a full stack developer and a big fan of typed functional programming!"
   description = "Andy White's personal website"
-  keywords = "blog,developer,personal"
+  keywords = "blog,tech,developer,software,personal"
   avatarurl = "images/andy.jpeg"
   #favicon_32 = "/img/favicon-32x32.png"
   #favicon_16 = "/img/favicon-16x16.png"
@@ -53,7 +56,7 @@ enableEmoji = true
 [[menu.main]]
   name = "Blog"
   weight = 1
-  url = "/blog/"
+  url = "/posts/"
 [[menu.main]]
   name = "Projects"
   weight = 2

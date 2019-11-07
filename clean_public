@@ -1,0 +1,7 @@
+#! /usr/bin/env bash
+set -euo pipefail
+
+. ./bash_common
+
+echo_cyan "Cleaning public/ folder..."
+echo_command "find public -type f ! -name '.git' -delete"
