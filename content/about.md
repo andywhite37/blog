@@ -18,8 +18,7 @@ Electrical/Computer Engineering. After working in robotics, control systems,
 and circuits labs in college, and frying my fair share of circuit boards and
 components, I opted to pursue a career in software development rather than
 electrical things. I love software development because all you need is a
-computer, and you can do so many different and amazing things, from games to
-command-line tools to web apps to native apps.
+computer, and you can do so many different things.
 
 In my career, I've used a variety of languages, including C, C++, Perl, Java,
 Python, C#, JavaScript, Haxe, Scala, PureScript, Haskell, and ReasonML. My
@@ -30,7 +29,7 @@ ideas, and growing my understanding.
 
 In my spare time, I spend a lot of time with my wife and kids, and I enjoy
 biking, playing guitar, and kayaking. (Or I'd like to enjoy those things if I
-could find some spare time.)
+could find any spare time.)
 
 You can find me online on [GitHub](https://github.com/andywhite37), sometimes
 on [Twitter](https://twitter.com/whitehouse3001) and

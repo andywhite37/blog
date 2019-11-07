@@ -36,22 +36,31 @@ in the [Reazen](https://github.com/reazen) GitHub org.
 # NixOS
 
 My co-worker [Jeff Simpson](https://github.com/fooblahblah) convinced me to
-try out NixOS when I had recently gotten a new work computer. I still don't
-completely know what I'm doing, but I'm enjoying using this quite different
-and innovative Linux distro.
+try out [NixOS](https://nixos.org) when I had recently gotten a new work
+computer. I still don't completely know what I'm doing, but I'm enjoying
+using this quite different and innovative Linux distro.
 
 # Scala
 
 I don't have any open-source work to list in the Scala ecosystem, but I've
-had the opportunity to hone my pure functional programming skills using
-libraries like cats, shapeless, atto, circe, and ZIO.
+had the opportunity to learn and work with FP libraries like:
+
+- [cats](https://typelevel.org/cats/)
+- [shapeless](https://github.com/milessabin/shapeless)
+- [atto](https://tpolecat.github.io/atto)
+- [circe](https://circe.github.io/circe)
+- [ZIO](https://zio.dev)
 
 # PureScript
 
-I haven't done as much PureScript as I would like to, but I did create a library
-for purescript-halogen to wrap a now-deprecated Material UI library (material design lite/mdl):
+I haven't done as much PureScript as I would like to, but I did a small
+project for
+[purescript-halogen](https://github.com/slamdata/purescript-halogen) to wrap
+a now-deprecated Material Design UI library:
 
 - [purescript-halogen-mdl](https://github.com/andywhite37/purescript-halogen-mdl)
+  - [Material Design Lite](https://getmdl.io) FFI library for
+    [Halogen](https://github.com/slamdata/purescript-halogen)
 
 # Haxe
 
@@ -74,6 +83,6 @@ for purescript-halogen to wrap a now-deprecated Material UI library (material de
 # Unity
 
 I don't have much to show beyond some tutorial code, but at one time I
-decided it would be fun to learn the Unity game development framework. I
-enjoyed using the tools, but ultimately, I kind of fizzled out having to use
-C# again, after having gotten used to functional programming idioms.
+decided it would be fun to learn the Unity game development framework.
+Knowing OCaml/ReasonML now I'm a little curious to go back and see what it
+looks like to use F# with Unity, rather than C#.
