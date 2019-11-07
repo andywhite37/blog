@@ -43,6 +43,11 @@ enableEmoji = true
   math = true
   custom_css = []
   inverted = false
+  custom_js = [
+    "https://cdnjs.cloudflare.com/ajax/libs/anchor-js/4.2.0/anchor.min.js",
+    "/js/main.js"
+  ]
+
 [[params.social]]
   name = "GitHub"
   icon = "fab fa-github fa-2x"
