@@ -296,7 +296,8 @@ We've now created two versions of the function `t('a) => t('c)` - one version
 by composing two specialized partial-applications of `map`, and one using a
 composed function within `map`. The second law states that these two
 specialized `t('a) => t('c)` functions must be equal. In other words (`==`
-just means these things are structurally equal):
+here just means these things should be equivalent for a valid functor, not that
+the functions should be referentially or structurally equal):
 
 ```ocaml
 map(aToB) >> map(bToC) == map(aToB >> bToC)
