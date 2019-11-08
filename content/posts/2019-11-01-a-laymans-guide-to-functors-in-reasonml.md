@@ -56,8 +56,7 @@ to bundle with a tool like [Webpack :scream:](https://webpack.js.org),
 [Parcel](https://parceljs.org), [Rollup](https://rollupjs.org/guide/en/) or
 whatever the latest
 *so hot right now* bundler happens to be in the JavaScript community. There
-*are also
-tools for converting ReasonML syntax to OCaml and vice-versa - every
+are also tools for converting ReasonML syntax to OCaml and vice-versa - every
 syntactical construct in OCaml maps to a syntactical construct in ReasonML.
 
 The workflow is basically:
