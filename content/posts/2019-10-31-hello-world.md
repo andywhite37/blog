@@ -1,9 +1,9 @@
 ---
-title: "Hello World"
 date: 2019-10-31T21:11:53-06:00
-draft: false
+title: "Hello World"
 categories: ["Software Development", "Functional Programming"]
 tags: ["Rambling"]
+draft: false
 ---
 
 The world of typed functional programming is a vast, mind-blowing, and often

@@ -1,9 +1,10 @@
 ---
-title: "A Layman's Guide to Functors in ReasonML"
 date: 2019-11-01T17:50:46-06:00
-draft: false
+title: "A Layman's Guide to Functors in ReasonML"
+#series: ["A Layman's Guide to Functional Programming"]
 categories: ["Software Development", "Functional Programming"]
 tags: ["ReasonML", "OCaml", "Functors", "Layman's Guide"]
+draft: false
 ---
 
 In [my intro post](/posts/2019-10-31-hello-world) I talked about my background
@@ -220,8 +221,8 @@ The first functor law can be written like this:
 // The identity function - simply returns the value given as the argument
 let id = a => a;
 
-// The === here just means these things must be the same
-map(id, fa) === fa;
+// The == here just means these things must be the structurally the same
+map(id, fa) == fa; // true
 ```
 
 Basically if you map the identity function over your functor, you should get
@@ -294,11 +295,11 @@ let mapAToC: t('a) => t('c) = map(aToC);
 We've now created two versions of the function `t('a) => t('c)` - one version
 by composing two specialized partial-applications of `map`, and one using a
 composed function within `map`. The second law states that these two
-specialized `t('a) => t('c)` functions must be equal. In other words (`===`
-just means these things are equal):
+specialized `t('a) => t('c)` functions must be equal. In other words (`==`
+just means these things are structurally equal):
 
 ```ocaml
-map(aToB) >> map(bToC) === map(aToB >> bToC)
+map(aToB) >> map(bToC) == map(aToB >> bToC)
 ```
 
 This is probably confusing (and poorly explained), but basically what it
@@ -390,7 +391,7 @@ module List = {
 
   let rec map = (f, list) => switch(list) {
     | [] => []
-    | [head, ...tail] => [f(head), map(f, tail)]
+    | [head, ...tail] => [f(head), ...map(f, tail)]
   };
 
   // Now let's define our FUNCTOR as a module that implements our module type FUNCTOR
