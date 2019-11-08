@@ -999,14 +999,15 @@ to produce the `Result.t('a, Error.t)`
     actually done anything yet), and then you just run it when you're ready
     for it to do its thing.
 1. I added a `Decoder.boolean` function which is a decoder that succeeds if
-the given `Js.Json.t` value is a boolean, and fails if it's not a boolean. 1.
-At the bottom, I'm setting up my decoder to expect to parse a boolean (using
+the given `Js.Json.t` value is a boolean, and fails if it's not a boolean.
+1. At the bottom, I'm setting up my decoder to expect to parse a boolean (using
 `Decoder.boolean`), then I'm mapping my `Decoder` to convert the `bool` to a
 `string`, then finally, I'm running the decoder with a few test values
-(`true`, `false`, and `"hi"`), to see what happens. The `true` and `false`
-cases log the expected strings from the `map`, and the `"hi"` case fails.
-    - the `[["hi"]]` is just the JS representation of my
-    `ExpectedBool(Js.Json.t)` error.
+(`true`, `false`, and `"hi"`), to see what happens.
+    - The `true` and `false` cases log the expected strings from the `map`,
+      and the `"hi"` case fails.
+    - the `[["hi"]]` is just the JS representation
+      of my `ExpectedBool(Js.Json.t)` error.
 
 You can write other decoders or parsers like this, and do simple things like
 parsing a single value and mapping it with a `FUNCTOR`, but to decode/parse
