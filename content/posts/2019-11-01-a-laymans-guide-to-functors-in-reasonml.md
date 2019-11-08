@@ -48,20 +48,23 @@ more familiar to developers coming from JavaScript/ECMAScript. ReasonML has a
 few different compilers which are able to produce JavaScript as a "backend,"
 meaning that it can transpile ReasonML (or OCaml) code to JavaScript, for use
 in the browser, or in Node.js, for example. The compiler I most use at the
-moment is called [BuckleScript](https://bucklescript.github.io/en/), which is
-actually specifically an OCaml to JS compiler. To make it work with ReasonML,
-you use a separate tool to translate the ReasonML code to OCaml code before
-compiling it with the BuckleScript compiler to produce the JavaScript output,
-which you then have to bundle with a tool like [Webpack
-:scream:](https://webpack.js.org), [Parcel](https://parceljs.org),
-[Rollup](https://rollupjs.org/guide/en/) or whatever the latest
-*so hot right now* bundler happens to be in the JavaScript community.
+moment is called [BuckleScript](https://bucklescript.github.io/en/), which
+was originally an OCaml to JS compiler. BuckleScript is integrated with
+ReasonML so that it can parse the ReasonML code into the OCaml AST, then
+compile the OCaml AST to produce the JavaScript output, which you then have
+to bundle with a tool like [Webpack :scream:](https://webpack.js.org),
+[Parcel](https://parceljs.org), [Rollup](https://rollupjs.org/guide/en/) or
+whatever the latest
+*so hot right now* bundler happens to be in the JavaScript community. There
+*are also
+tools for converting ReasonML syntax to OCaml and vice-versa - every
+syntactical construct in OCaml maps to a syntactical construct in ReasonML.
 
 The workflow is basically:
 
 1. Write ReasonML code
-2. Convert ReasonML code to OCaml
-3. Compile OCaml code with BuckleScript to produce JavaScript code
+2. Parse ReasonML code into the OCaml AST
+3. Type-check and compile OCaml AST to produce JavaScript code
 4. Bundle JavaScript code to produce something you can use on the web or in Node.js
 
 If this sounds a little crazy to you, you're right, it is a little crazy.
@@ -72,8 +75,8 @@ other end is quite readable and usually pretty optimized. Overall, there is
 some weight of tooling with this, but the installation of these tools have
 been mostly ironed out, and are improving each day.
 
-As a side note, you can also compile ReasonML code to native code using the
-native OCaml compiler and tools like [esy](https://esy.sh) or
+As a side note, you can also compile ReasonML code natively using the native
+OCaml compiler and tools like [esy](https://esy.sh) or
 [dune](https://github.com/ocaml/dune). I don't have any experience with these
 native tools, so I won't say anymore about that.
 
