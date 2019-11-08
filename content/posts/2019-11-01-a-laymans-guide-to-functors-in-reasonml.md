@@ -67,8 +67,8 @@ The workflow is basically:
 4. Bundle JavaScript code to produce something you can use on the web or in Node.js
 
 If this sounds a little crazy to you, you're right, it is a little crazy.
-However steps 2 and 3 kind of happen at the same time by the same tool, and
-the BuckleScript compiler is blazing fast, so if you're writing ReasonML, you
+However steps 2 and 3 happen at the same time by the same tool, and the
+BuckleScript compiler is blazing fast, so if you're writing ReasonML, you
 really don't see OCaml code at all, and the JavaScript that comes out the
 other end is quite readable and usually pretty optimized. Overall, there is
 some weight of tooling with this, but the installation of these tools have
