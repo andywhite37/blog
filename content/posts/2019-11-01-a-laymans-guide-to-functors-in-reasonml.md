@@ -1052,7 +1052,6 @@ would be used like this:
 Future.make(resolve => Js.Global.setTimeout(() => resolve("hi"), 40));
 ```
 
-
 ```ocaml
 module Future = {
   type getFn('a) => ('a => unit) => unit;
@@ -1090,6 +1089,63 @@ Compared to `Js.Promise.t`, which hides the error type in some opaque (and
 offensive, if you ask me) abstract type, the `Future` approach makes both the
 successful value and the error value "first-class" - you have full control
 over whether and how your async work can fail.
+
+# Js.Promise functor
+
+For one final example, let's implement `FUNCTOR` for
+[Js.Promise](https://reasonml.github.io/docs/en/promise). `Js.Promise` is the
+ReasonML binding for the ubiquitous [JavaScript
+Promise](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise).
+
+You can implement `map` using the `Js.Promise.then_` function, which is the binding
+to the `then` method of JS `Promise`.
+
+```ocaml
+module Promise = {
+  type t('a) = Js.Promise.t('a);
+
+  let map = (f: 'a => 'b, promiseA: Js.Promise.t('a)): Js.Promise.t('b) =>
+    promiseA |> Js.Promise.then_(a => Js.Promise.resolve(f(a)));
+  
+  module Functor: FUNCTOR with type t('a) = t('a) = {
+    type nonrec t('a) = t('a);
+    let map = map;
+  };
+};
+```
+
+The usage would look something like this:
+
+```ocaml
+Js.Promise.resolve(42)
+|> Promise.map(a => a * 2)
+|> Js.Promise.then_(b => {
+     Js.log(b);
+     Js.Promise.resolve();
+   });
+```
+
+To quickly explain what's going on here, the `then` method of the **native
+JavaScript** `Promise` gives you the value from the previous promise, and
+allows you to either return a pure value `'b`, a new `Promise` of `'b`,
+`null`, nothing at all (aka `undefined`), or throw! This ability to return a
+pure value or a new `Promise`, `null`, or `undefined` is not something we can
+express directly in the ReasonML type system. Instead, the authors of the
+BuckleScript `Js.Promise` binding made it so `Js.Promise.then_` must return a
+`Js.Promise`. In our case, we map the value of `'a` to `'b`, and return a
+`Promise.resolve(b)`. In vanilla JavaScript, you could just do `a => f(b)`,
+but not so in ReasonML.
+
+When we get into monads in a later post, we'll discuss the difference between
+returning a pure value, like we do in `map`, and returning a new "monadic"
+value, like we're doing here with `Js.Promise.then_`. If you want to read
+more about this, a function like `Js.Promise.then_` that lets you return a
+new monadic value is often called `bind`, `flatMap`, or `>>=`, and the
+function that lets you inject a pure value into your monadic context, like
+`Js.Promise.resolve` is often called `pure`, or (confusingly) `return`.
+`Js.Promise` is not the greatest thing to use for explaining functors and
+monads, because `then` kind of magically does both `map` and `flatMap`, but
+it's a familiar example for JavaScript folks.
 
 # What can you do with a FUNCTOR?
 
