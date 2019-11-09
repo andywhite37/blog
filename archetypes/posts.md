@@ -1,9 +1,8 @@
 --- 
 date: {{ .Date }}
-title: ""
+title: "{{ replace .Name "-" " " | title }}"
 description: ""
-series: []
-categories: []
-tags: []
+categories: ["Software Development", "Functional Programming"]
+tags: ["ReasonML", "OCaml", "Functors", "Layman's Guide"]
 draft: true
 ---
