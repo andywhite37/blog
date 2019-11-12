@@ -85,7 +85,7 @@ all-or-nothing paradigm.
 # APPLY typeclass
 
 The `APPLY` typeclass is an extension of the `FUNCTOR` typeclass that I
-convered in my [blog post about
+covered in my [blog post about
 functors](/posts/2019-11-01-a-laymans-guide-to-functors-in-reasonml). Being
 an extension of another typeclass simply means that `APPLY` is everything
 that `FUNCTOR` is, and must abide by the same laws as `FUNCTOR`, but it also
@@ -438,7 +438,8 @@ functions are applied to all the values to produce a new longer list of
 un-obvious utility. The same idea applies for `array('a)`. For a binary tree,
 imagine a binary tree of functions `Tree.t('a => 'b)` applied to a binary
 tree of values `Tree.t('a)`. These applicatives can be implemented, but it's
-not something you run into as much in day-to-day use.
+not something you run into as much in day-to-day use, so I'll not get into
+these at this time, but you are welcome to give it a shot yourself!
 
 # Result applicative
 
@@ -650,7 +651,7 @@ decoder to get our function, and a decoder to get our value, so we feed the
 `Js.Json.t` value into each, but then we get a `Result.t('a => 'b, Error.t)`
 and a `Result.t('a, Error.t)`. Here we have a function `'a => 'b` buried in a
 `Result` and a value `'a` buried in a result - so we can just use
-`Reuslt.apply` to get our `Reuslt.t('b, Error.t)`!
+`Reuslt.apply` to get our `Result.t('b, Error.t)`!
 
 This example serves to show that you don't always need to completely
 understand what you're doing to create the typeclass instances for a type, as
@@ -837,7 +838,7 @@ let optionTuple = Option.apply(optionCToTuple, optionC);
 ```
 
 This works for any number of arguments. You can think of each step of `map`
-and `apply` "filling" one of the arguments of hte initial function, but it's
+and `apply` "filling" one of the arguments of the initial function, but it's
 all done inside of our applicative context. Put differently, each `apply`
 step is given a function inside our applicative context, and applies it to a
 value in an applicative context, to produce a function in an applicative
