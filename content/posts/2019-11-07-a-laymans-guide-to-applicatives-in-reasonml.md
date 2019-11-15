@@ -1212,9 +1212,194 @@ where effects kind of just happen when they happen, and are manifested by
 wants, whenever it wants, the functional approach will take a little getting
 used to, but it unlocks a great deal of control and power.
 
+# Apply extensions
+
+Now that we've seen some of the things that you can do with `APPLICATIVE`,
+let's try to capture those ideas so we can reuse them for **every** applicative.
+In the [functor article](/posts/2019-11-01-a-laymans-guide-to-functors-in-reasonml.md),
+we saw that we could use a module functor to add "extensions" or "freebies"
+for any instance of `FUNCTOR`, and now we'll do the same thing for `APPLY`.
+Note that all of these extensions just need `APPLY` and not `APPLICATIVE`, because
+these things only need `map` and `apply`, and not `pure`.
+
+```ocaml
+module ApplyExtensions = (A: APPLY) => {
+  let applyFirst = (fa: A.t('a), fb: A.t('b)): A.t('a) => {
+    let f = (a, _) => a;
+    A.apply(A.map(f, fa), fb);
+  };
+
+  let applySecond = (fa: A.t('a), fb: A.t('b)): A.t('b) => {
+    let f = (_, b) => b;
+    A.apply(A.map(f, fa), fb);
+  };
+
+  let map2 = (f: ('a, 'b) => 'c, fa: A.t('a), fb: A.t('b)): A.t('c) => {
+    A.apply(A.map(f, fa), fb);
+  };
+
+  let map3 = (f: ('a, 'b, 'c) => 'd, fa: A.t('a), fb: A.t('b), fc: A.t('c)): A.t('d) => {
+    A.apply(A.apply(A.map(f, fa), fb), fc);
+  };
+
+  // TODO: map4, map5, etc.
+
+  let mapTuple2 = (f: ('a, 'b) => 'c, (fa: A.t('a), fb: A.t('b))): A.t('c) => {
+    map2(f, fa, fb);
+  };
+
+  let mapTuple3 = (f: ('a, 'b, 'c) => 'd, (fa: A.t('a), fb: A.t('b), fc: A.t('c))): A.t('d) => {
+    map3(f, fa, fb, fc);
+  };
+
+  // TODO: mapTuple4, mapTuple5, etc.
+
+  let tuple2 = (fa: A.t('a), fb: A.t('b)) => map2((a, b) => (a, b), fa, fb);
+
+  let tuple3 = (fa: A.t('a), fb: A.t('b), A.t('c)) => map3((a, b, c) => (a, b, c), fa, fb, fc);
+
+  // TODO: tuple4, tuple5, etc. - as many as you want
+};
+
+module ApplyInfix = (A: APPLY) => {
+  module AE = ApplyExtensions(A);
+
+  let (<*>) = A.apply;
+
+  let (<*) = AE.applyFirst;
+
+  let (*>) = AE.applySecond;
+};
+```
+
+There's a lot going on here, so let's break it down. We're creating a module
+functor `ApplyExtensions` that takes an instance of `APPLY` and uses that
+instance to define a bunch of extension functions. Because we have an `APPLY`
+we are constrained to only having access to a type `A.t('a)`, the `map`
+function, and the `apply` function, but we can do a lot with just these. Note
+that you can see this in action in
+[Relude_Extensions_Apply](https://github.com/reazen/relude/blob/master/src/extensions/Relude_Extensions_Apply.re).
+
+We're first defining functions called `applyFirst` and `applySecond`. These
+are interesting functions that take two effectful values, and **runs them
+both**, but then only returns the result of the first or the second,
+respectively. The key here is that we're actually running both effects, and
+not just discarding the undesired side immediately - both effects must
+succeed in order for us to get the result. If either or both effects fail, we
+get an unsuccessful result, which can mean different things depending on
+which `APPLY` instance we're using. E.g for `option`, the "unsuccessful
+value" is `None`, and for `Result` the unsucessful value is `Error(e)`, etc.
+These two functions are more commonly seen in their operator forms: `<*` and
+`*>` they kind of look like half of the `apply` operator `<*>`, and point at
+the argument that we want to keep. See
+[ReludeParse](https://github.com/reazen/relude-parse) for a real-world
+non-trivial use case for these operators.
+
+Next we're defining a bunch of `mapN` functions - here we only go up to
+`map2`, and `map3`, but in your own library, you could go as high as you
+wanted. Note that if you go above 5 or so arguments, you might be better off
+just using the more flexible **map/ap/ap** pattern with `<$>` and `<*>`
+operators.
+
+We then define an alternative version of `mapN` called `mapTupleN` - this
+function simply takes a tuple of the arguments, which can sometimes be
+a more convenient way of chaining a series of operations, e.g.
+
+```ocaml
+(Some(42), Some("hi"), Some(bool))
+|> Option.mapTuple3((i, s, b) => ...do something here...);
+```
+
+Finally we create a separate module functor for defining infix operators.
+Having a separate module for infix operators can be handy for when you want
+to do a local open and just get access to the operators for a few small
+operations. Note that using the OCaml/ReasonML `include` mechanism, you can
+choose to include the infix operators into any organizational module you
+want.
+
+The pattern we use in Relude to incorporate these extensions is something
+like this:
+
+```ocaml
+module Option = {
+  type t('a) = option('a);
+
+  let map = ...;
+
+  let apply = ...;
+
+  let pure = ...;
+
+  module Functor: FUNCTOR = {
+    type nonrec t('a) = t('a); // alias
+    let map = map; // alias
+  };
+  include FunctorExtensions(Functor);
+
+  module Apply: APPLY = { ... };
+  include ApplyExtensions(Apply);
+
+  module Applicative: APPLICATIVE = { ... };
+  include ApplicativeExtensions(Applicative);
+
+  // ... other typeclasses and extension module functors
+
+  module Infix = {
+    include FunctorInfix(Functor);
+    include ApplyInfix(Functor);
+    // ... other infix module functors
+  };
+};
+```
+
+This way, all the top-level functions are exposed at the top level of
+the module for convenience, then we have the typeclasses also at the top level
+with their corresponding functions and types defined as just aliases, and we
+immediately construct and include each of the typeclass extension modules.
+This include puts the extension functions like `map3`, `tuple3`, etc. right
+at the top-level of the module, so you can do things like `Option.map3(...)`.
+Finally, we create a separate `Infix` module, where we include all of the 
+`Infix` extension modules. This puts all the operators in one common scope,
+so you can do things like this:
+
+```ocaml
+let x = Option.Infix.(
+  f <$> Some(42) <*> Some("hi") <*> Some(true)
+);
+```
+
+That was a lot of discussion, but in case you missed it, we just gave
+ourselves an implementation of `map2-N`, `tuple2-N`, `mapTuple2-N`, `<*>`,
+`<*`, `*>` for **every module that we have that has an `APPLICATIVE`
+instance**! I think that's pretty awesome! Your `option`, `Result`,
+`Js.Promise`, `Future`, `IO`, and every other `APPLICATIVE` gets a handy,
+consistent and powerful set of functions for free, just because we took the
+time to define a `map` and `apply`. Plus, we now have a layer of centralized
+abstraction and extension where we can add more of these types of functions,
+and we just get them all for free anywhere we're using `ApplyExtensions`! If
+you think this is cool, you should take a look at languages like Haskell or
+PureScript and see how they do all this with much less ceremony.
+
 # Applicative validation
 
-# Apply extensions
+We now have a bunch of useful tools for dealing with `APPLY` and
+`APPLICATIVE` instances and their "effectful values," so let's see what we
+can do with them.
+
+First of all, if you've used `Promise.all` in JavaScript (or the
+`Js.Promise.allN` equivalents in ReasonML), you've already used an
+applicative-style API. We have our own versions of these in our extensions
+like `mapN`, `tupleN`, `mapTupleN`, etc. These are all just helper functions
+that let us process a bunch of effectful values in parallel and combine the
+results in different ways, which is quite handy all by itself.
+
+If you have a situation where you have a bunch effectful values to deal with
+(say `N+1` values), and your `mapN` functions only "go up to `N`," you can
+deal with an arbitrary number of arguments using the **map/ap/ap** pattern
+using `<$>` and `<*>`, which we'll see below.
+
+Let's now look at one more very useful use case for applicatives: applicative
+validation/parsing/decoding.
 
 # The applicative laws
 
