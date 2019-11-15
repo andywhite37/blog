@@ -64,8 +64,8 @@ re-formulated into functions that makes the parallel capability more clear
 1. Introduce the **map/ap/ap** pattern, as I like to call it
 1. Show the variation on the **map/ap/ap** pattern: **pure(f)/ap/ap**
 1. Talk about applicative "effects"
-1. Talk about applicative validation
 1. Talk about `APPLY` extensions
+1. Talk about applicative validation
 1. Talk about the `APPLICATIVE` laws
 
 # Applicative Programming with Effects paper
@@ -349,6 +349,13 @@ them both to resolve before we can get our `'b` value. If we were
 **constructing** the inner promise here, it would matter, but the promise was
 already constructed and running when we got it.
 
+Another thing to note is that if either of the `Js.Promises` fail, the
+`apply` function will fail. Again, we can only succeed if both inputs succeed
+and give us our `'a => 'b` function and our `'a` value. With applicatives, we
+actually have a few different options for handling errors, but here I'm going
+to keep it simple and just fail fast using the default failure mechanism of
+chained `Promises`.
+
 Example usage:
 
 ```ocaml
@@ -590,7 +597,8 @@ takes an `a` argument and another ignored argument, and then just returns the
 the `a` argument, you now have a function `_ => a`. This is useful for
 creating a function that just produces a constant value regardless of the
 input, hence the name `const`. It's another one of those utilities like
-`identity: 'a => 'a` that you didn't know you needed until you did.
+`identity: 'a => 'a` that is so trivially simple, but sometimes it's exactly
+what you need.
 
 Overall, the usefulness of this `APPLICATIVE` instance for `'x => 'a` is not
 immediately obvious, but we'll explore it more when we talk about the [reader
@@ -653,7 +661,7 @@ buried in another (applicative) type `Result`. In `Decoder.apply` we have a
 just a function that takes a `Js.Json.t` value and produces a `Result`, so we
 feed the `Js.Json.t` value into each decoder to get a `Result.t('a => 'b,
 Error.t)` and a `Result.t('a, Error.t)`. Here we have a function `'a => 'b`
-buried in a `Result` and a value `'a` buried in a result - so we can take
+buried in a `Result` and a value `'a` buried in a `Result` - so we can take
 advantage of the fact that `Result` is also an applicative functor, and just
 use `Result.apply` to apply the wrapped function to our wrapped value to get
 our `Result.t('b, Error.t)`! Take note that we've again not actually done any
@@ -765,8 +773,7 @@ We're given a `t('a)` and a `t('b)`, and we have a function `makeTuple2: 'a
 don't have a function of the form `t('a => 'b)` so `apply` doesn't seem
 immediately applicable, but we do have our "pure" `makeTuple2` function, so
 let's just try the only thing that seems to make sense, `map: ('a => 'b,
-t('a)) => t('b)`. Let's just use `option('a)` as our functor/applicative,
-just for simplicity.
+t('a)) => t('b)` 
 
 Let's quickly consider our function `makeTuple2: 'a => ('b => ('a, 'b))` again.
 If we write it like this, we can sort of fuzz the right hand side into an opaque
@@ -793,6 +800,12 @@ let map: ('a => 'c,             , t('a)) => t('c            );
 let map: ('a => ('b => ('a, 'b)), t('a)) => t('b => ('a, 'b));
 ```
 
+If it's not clear, I'm just trying to demonstrate what happens when you map a
+function of more than one argument over a functor whose type matches the type
+of the first argument of our function - you end up with a **function inside
+your functor context.**  And this function has one fewer argument than what
+you started with.
+
 Let's try mapping `makeTuple2` over our `fa`, which is a `t('a)`:
 
 ```ocaml
@@ -800,34 +813,34 @@ let fa: t('a) = ...;
 let fBToAB: t('b => ('a, 'b)) = map(makeTuple2, fa);
 ```
 
-Our `fBToAB` has the type `t('b => ('a, 'b))` - we just mapped a function of
-"multiple arguments" over a functor of a type matching the type of the first
-argument of our function! The ability to `map` (and `apply`) a function of
-multiple arguments over a set of individual functor values is the key to how
-applicatives work.
+Our `fBToAB` has the type `t('b => ('a, 'b))` - we mapped a function of
+multiple arguments over our functor and ended up with a function of one fewer
+arguments inside our functor context. This ability to `map` and `apply` a
+function of multiple arguments over a bunch of individual functor values is
+the key to how applicatives work.
 
 After this `map` over the first value `t('a)`, we now have a function of the
-form `t('x => 'y)` (actually `t('b => ('a, 'b))`), which is what `apply`
-deals with. We now need to apply this function to our `t('b)` value, and to
-do that, we just use `apply`:
+form `t('x => 'y)` (actually `t('b => ('a, 'b))`). `map` can't deal with this
+because `map` wants a pure/non-wrapped function, but `apply` knows what to do
+with a wrapped function:
 
 ```ocaml
 let fa: t('a) = ...;
 
 let fb: t('b) = ...;
 
-// map first
+// map first - now we have a function inside a functor
 let fBToAB: t('b => ('a, 'b)) = map(makeTuple2, fa);
 
-// then apply
+// then apply this wrapped function to the wrapped 'b value
 let fAB: t(('a, 'b)) = apply(fBToAB, fb);
 ```
 
 We've now "filled" all the arguments of `makeTuple2`, and we get our final
-result - a tuple wrapped in our applicative context: `t('a, 'b)`.
+result - a tuple wrapped in our applicative context: `t(('a, 'b))`.
 
 To wrap up, we'll now write our `tuple2` function in terms of `map` and
-`apply` (and stay tuned to see a cleaner, more intuitive way to do this
+`apply`. (Stay tuned to see a cleaner, more intuitive way to do this
 below):
 
 ```ocaml
@@ -837,7 +850,8 @@ let tuple2 = (fa: t('a), fb: t('b)) => {
 };
 ```
 
-Let's use options to make this more concrete:
+Let's run through a quick demonstration of this using options to make it more
+concrete:
 
 ```ocaml
 let makeTuple2 = (a, b) => (a, b);
@@ -880,15 +894,19 @@ let tuple2 = (fa: t('a), fb: t('b)) => {
 };
 ```
 
-The even more surprising thing is that this pattern of `map` and `apply`
-works for **any** number of arguments - we can just keep `apply`ing each
-successive wrapped result to the next wrapped input value until we no longer
-have a function to apply. I imagine each `apply` step successively filling in each
-argument of the input function, until we run out of arguments.
+# Apply multiple times
+
+Surprisingly, this pattern of `map` and `apply` works for **any** number of
+arguments - we can just keep `apply`ing the resulting functions to the next
+values until we run out of arguments in our function and arrive at our final
+result. That said, we will only succeed in getting the final result if each
+step along the way is also successful. If any step fails, the whole
+computation will fail, but we actually have some cool options for how we can
+deal with errors.
 
 If you think about how `apply` is implemented, it gets a wrapped function,
 which basically carries information about the previous computations, and a
-wrapped value, which is the "current value" we want to operate on. The
+wrapped value, which is the "current value" on which we want to operate. The
 previous computations may have already failed, but `apply` will still go
 through the motion of considering each input value, regardless of what
 happened in the past. That said, `apply` doesn't give us the ability to
@@ -900,12 +918,13 @@ one of the reasons that applicatives are strictly less powerful than monads.
 However, being less powerful sometimes has its advantages - for example,
 because an applicative can't fork the flow of a computation (i.e. recover
 from an error, or create some new processing branch), we are forced to feed
-it all the information we want to process at once. Knowing the full-scope
-of the problem up-front can sometimes unlock certain optimizations and allow
-us to make certain assumptions around how the computation will occur.
+it all the information we want to process at once. Knowing the full-scope of
+the problem up-front can sometimes unlock certain optimizations and allow us
+to make certain assumptions about how the computation will occur.
 
-Below is an example of the `map`/`apply` pattern being used with a (curried)
-arity 3 function:
+Anyway, to demonstrate how to apply the pattern to functions of more
+arguments, below is an example of the `map`/`apply` pattern being used with a
+(curried) arity 3 function:
 
 ```ocaml
 let makeTuple3 = (a, b, c) => (a, b, c);
@@ -938,7 +957,8 @@ let tuple3 = (fa: t('a), fb: t('b), fc: t('c)) => {
 ```
 
 Again, this pattern works for any number of arguments - just keep `apply`ing
-until you "fill" all the arguments of your function.
+until you "fill" all the arguments of your function. Try it yourself with
+`tuple4` and so-on.
 
 The `tuple2: (t('a), t('b)) => t(('a, 'b))` function is sometimes called
 `product`, `product2` or `zip`, because it takes two effectful values and
@@ -949,10 +969,12 @@ we start with two independent "effectful" values `t('a)`, and `t('b)`, and we
 produce a value `t(('a, 'b))` that's a combination of our two inputs
 (assuming they both "succeed").
 
-If you got lost somewhere along the way, I'd again recommend trying it
-yourself with a concrete type like `option`. It's hard to explain, but once
-you slog through it enough times, you'll get it. Try implementing these
-functions too, to see how the patterns expands to more values:
+Well, that was my attempt at describing how applicatives work, but not sure
+how successful it was. If you got lost somewhere along the way, I'd again
+recommend trying it yourself with a concrete type like `option`. It's hard to
+explain, but once you slog through it enough times, you'll get it. Try
+implementing these functions too, to see how the patterns expands to more
+values:
 
 ```ocaml
 let tuple4: (t('a), t('b), t('c), t('d)) => t(('a, 'b, 'c, 'd));
@@ -960,6 +982,10 @@ let tuple4: (t('a), t('b), t('c), t('d)) => t(('a, 'b, 'c, 'd));
 let tuple5: (t('a), t('b), t('c), t('d), t('e)) => t(('a, 'b, 'c, 'd, 'e));
 // etc.
 ```
+
+If you haven't recognized it yet, these look at lot like the
+`Js.Promise.allN` functions, but there's no specific mention of `Js.Promise`
+here!
 
 # map2, map3, etc.
 
@@ -1007,6 +1033,9 @@ For one final side note, we can also now implement our `tuple2` function in term
 let tuple2 = (fa: t('a), fb: t('b)): t(('a, 'b)) => map2((a, b) => (a, b), fa, fb);
 ```
 
+These `mapN` functions are useful for running a bunch of independent
+applicative effects and combining the results however we please.
+
 # The map/ap/ap pattern
 
 Let's get super fancy, and cast off our fear of weird operators, and do the
@@ -1015,7 +1044,7 @@ above using some Haskell-style infix operators. Once you grok the pattern
 quite beautiful. The usual caveat with operators applies - they add a level
 of opacity and abstraction that can be quite hostile to newcomers, so it's
 best to introduce them with some hand-holding, and not just dump them on
-people without the pre-requisite setup.
+people without the prerequisite setup.
 
 Let's first define an operator for map. We're going to use `<$>` because it's
 the conventional operator for `map` in many other FP languages, and it's
@@ -1060,9 +1089,10 @@ let map3 = (f: ('a, 'b, 'c) => 'd, fa: t('a), fb: t('b), fc: t('c)): t('d) => {
 };
 ```
 
-Infix operators let you move the name of a function between the arguments, so
-we could write this like below - just start from the innermost function application (`map`)
-and move the name of the function between the args, and work your way out:
+Infix operators let you move the name of a function between the two
+arguments, so we could write this like below - just start from the innermost
+function application (`map`) and move the name of the function between the
+args, and work your way out:
 
 ```ocaml
 apply(apply(map(f, fa), fb), fc);
@@ -1082,8 +1112,8 @@ let map3 = (f, fa, fb, fc) => f <$> fa <*> fb <*> fc;
 
 If you read it left-to-right, we start with our function `f`, and we map it
 over our first value `fa: t('a)`, so now we have a wrapped function, which we
-apply to our `fb`, and so on. The two things below are the same thing - one just
-uses infix operators, and the other uses normal named functions:
+apply to our `fb: t('b)`, and so on. The two things below are the same thing
+- one just uses infix operators, and the other uses normal named functions:
 
 ```ocaml
 let _ = f <$> fa <*> fb <*> fc;
@@ -1115,13 +1145,14 @@ let map3 = (f, fa, fb, fc) => pure(f) <*> fa <*> fb <*> fc;
 ```
 
 We've seen before how we can lift a pure function into our applicative
-context using `pure`, so this is just another way of achieving the same thing
-as **map/ap/ap**. The difference is that we immediately lift our function
-into the applicative context, so we can't use `map` (`<$>`) to apply it the
-first time - we have to go straight to `apply` (`<*>`) for the first
-application, and for all the rest.
+context using `pure` and then just `apply` it, so this is just another way of
+achieving the same thing as **map/ap/ap**. The difference is that we
+immediately lift our function into the applicative context, so we can't use
+`map` (`<$>`) to apply it the first time - we have to go straight to `apply`
+(`<*>`) for the first application, and for all the rest.
 
-We'll see this pattern again when we talk about applicative validation below.
+We'll see some more concrete uses of these operators below in "applicative
+validation".
 
 # Applicative "effects"
 
@@ -1142,8 +1173,11 @@ made aware (via the type system) that this function might either produce a
 value of type `'b` (`Some(b)`), or might fail to produce a value (`None`). In
 terms of "effects" we can say that this function has the "effect" of being
 unable to produce a value in some, or possibly all cases. This isn't a "side
-effect" like writing to STDOUT or reading the system time, but we'll soon see
-that these things are not so dissimilar.
+effect" like writing to STDOUT or reading the system time, but a behavior of
+the function where we're no longer just mapping inputs to nice and clean
+outputs. It turns out that traditional side effects are not so dissimilar
+from these types of effectful values, but that's a fairly large subject
+to get into.
 
 How about the function `'a => Result.t('b, 'e)`? Here we can observe the
 "effect" of possible failure - the function can either succeed and produce a
@@ -1183,12 +1217,12 @@ As a final example, if we look at the JSON decoder type like the
 `Decoder.t('a)` we defined above, we have a value that represents the effect
 of parsing a JSON value into some type, and the effect of possible of failure
 (which again is not represented by a polymorphic error type, but by a fixed
-error type that we've defined with the decoder). This effect is a little
-different than the others in that it's more of a deferred computation, but
-the same idea applies - the value itself doesn't do anything until we "run
-it" (by giving it a JSON value), and letting it produce a `Result`, which is
-how the effect of possible failure manifests itself, and can be handled or
-"run" separately from the decoding attempt.
+error type that we've defined with the decoder). This decoding effect is a
+little different than the others in that it's more of a deferred computation,
+but the same idea applies - the effectful value itself doesn't do anything
+until we "run it" (by giving it a JSON value), and letting it produce a
+`Result`, which is how the effect of possible failure manifests itself, and
+can be handled or "run" separately from the decoding effect.
 
 Before we move on, let's look back at the function `'a => 'b`. In many
 languages, including ReasonML, this type of function can actually have all
@@ -1209,7 +1243,7 @@ functional programming is the separation of describing what to do and
 actually doing it. If you're coming from a more imperative language or style,
 where effects kind of just happen when they happen, and are manifested by
 `null` values, exceptions, or spaghetti code that just does whatever it
-wants, whenever it wants, the functional approach will take a little getting
+wants whenever it wants, the functional approach will take a little getting
 used to, but it unlocks a great deal of control and power.
 
 # Apply extensions
@@ -1296,7 +1330,7 @@ the argument that we want to keep. See
 non-trivial use case for these operators.
 
 Next we're defining a bunch of `mapN` functions - here we only go up to
-`map2`, and `map3`, but in your own library, you could go as high as you
+`map2` and `map3`, but in your own library, you could go as high as you
 wanted. Note that if you go above 5 or so arguments, you might be better off
 just using the more flexible **map/ap/ap** pattern with `<$>` and `<*>`
 operators.
@@ -1368,6 +1402,31 @@ let x = Option.Infix.(
 );
 ```
 
+For types with more than one type parameter (like `Result.t('a, 'e)`), we
+unfortunately have to implement all of our typeclass instances and extensions
+inside a module functor (like `Result.WithError`), so we lose a little of the
+convenience of the extensions. In order to get access to `map3`, etc. for `Result`,
+you have to do something like this:
+
+```ocaml
+module ResultE = Result.WithError({ type t = myErrorType });
+
+ResultE.map3(...);
+```
+
+Unfortunately, you can't inline module functor stuff with function invocations,
+so you can't do this, which is a big bummer:
+
+```ocaml
+// Can't do this :(
+let x = Result.WithError({ type t = string }).map3(...);
+```
+
+Also, as we saw in the functor article, you can't pass modules that deal with
+higher-kinded types via first-class modules, so we're kind of stuck with the
+extra boilerplate of instantiating our module in one line, and using it where
+we need it.
+
 That was a lot of discussion, but in case you missed it, we just gave
 ourselves an implementation of `map2-N`, `tuple2-N`, `mapTuple2-N`, `<*>`,
 `<*`, `*>` for **every module that we have that has an `APPLICATIVE`
@@ -1378,7 +1437,8 @@ time to define a `map` and `apply`. Plus, we now have a layer of centralized
 abstraction and extension where we can add more of these types of functions,
 and we just get them all for free anywhere we're using `ApplyExtensions`! If
 you think this is cool, you should take a look at languages like Haskell or
-PureScript and see how they do all this with much less ceremony.
+PureScript and see how they do all this with much less ceremony, but it's
+still pretty awesome that we can achieve something similar in ReasonML!
 
 # Applicative validation
 
@@ -1399,7 +1459,17 @@ deal with an arbitrary number of arguments using the **map/ap/ap** pattern
 using `<$>` and `<*>`, which we'll see below.
 
 Let's now look at one more very useful use case for applicatives: applicative
-validation/parsing/decoding.
+validation, parsing, and decoding.
+
+# Validation data type and SEMIGROUP typeclass
+
+Before we jump into applicative validation, let's introduce a new data type
+`Validation.t('a, 'e)`, and a super cool feature of applicatives: error
+collection using a `SEMIGROUP`.
+
+... TODO ...
+
+# Back to applicative validation
 
 # The applicative laws
 
