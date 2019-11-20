@@ -9,7 +9,7 @@ draft: false
 
 # Other posts in this series:
 
-- [A Layman's Guide to Functors in ReasonML](2019-11-01-a-laymans-guide-to-functors-in-reasonml)
+- [A Layman's Guide to Functors in ReasonML](/posts/2019-11-01-a-laymans-guide-to-functors-in-reasonml)
 
 # Applicative functors
 
@@ -479,7 +479,7 @@ these at this time, but you are welcome to give it a shot yourself!
 Now let's try to implement `APPLICATIVE` for `Result.t('a, 'e)`. Since
 `FUNCTOR`/`APPLY`/`APPLICATIVE` want to operate on a type `t('a)`, we'll use
 the module functor trick (see the [functors
-article](/posts/2019-11-01-a-laymans-guide-to-functors-in-reasonml.md)) again
+article](/posts/2019-11-01-a-laymans-guide-to-functors-in-reasonml)) again
 to "lock-in" our error type:
 
 ```ocaml
@@ -556,7 +556,7 @@ issue later in the section on "applicative validation".
 # Function applicative
 
 As we saw in the [functor
-article](/posts/2019-11-01-a-laymans-guide-to-functors-in-reasonml.md), we
+article](/posts/2019-11-01-a-laymans-guide-to-functors-in-reasonml), we
 could implement `FUNCTOR` for the function of type `'x => 'a`. Let's see how
 to implement `APPLICATIVE` for this type:
 
@@ -637,7 +637,7 @@ functions too.
 # JSON decoder applicative
 
 Let's show a more real-world example of an applicative: the JSON decoder
-function we saw in the [functor article](/posts/2019-11-01-a-laymans-guide-to-functors-in-reasonml.md). I'll just jump right
+function we saw in the [functor article](/posts/2019-11-01-a-laymans-guide-to-functors-in-reasonml). I'll just jump right
 into it, and explain after, but I encourage you to try it yourself too.
 
 ```ocaml
@@ -1290,7 +1290,7 @@ great deal of control and power.
 
 Now that we've seen some of the things that you can do with `APPLICATIVE`,
 let's try to capture those ideas so we can reuse them for **every** applicative.
-In the [functor article](/posts/2019-11-01-a-laymans-guide-to-functors-in-reasonml.md),
+In the [functor article](/posts/2019-11-01-a-laymans-guide-to-functors-in-reasonml),
 we saw that we could use a module functor to add "extensions" or "freebies"
 for any instance of `FUNCTOR`, and now we'll do the same thing for `APPLY`.
 Note that all of these extensions just need `APPLY` and not `APPLICATIVE`, because
