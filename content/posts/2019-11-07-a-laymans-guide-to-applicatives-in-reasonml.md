@@ -1591,7 +1591,7 @@ We define these as distinct instances, because they are distinct semigroups.
 Note that integer subtraction and division are **not SEMIGROUPS** because
 those operations are not associative (they don't conform to the semigroup
 law, which requires that the append operation be associative). These
-operations might be usuable for other typeclasses, but not `SEMIGROUP`.
+operations might be usable for other typeclasses, but not `SEMIGROUP`.
 
 ```ocaml
 (1-2)-3 != 1-(2-3)
