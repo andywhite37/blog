@@ -6,15 +6,15 @@ categories: ["Software Development", "Functional Programming"]
 tags: ["TypeScript", "fp-ts", "React"]
 ---
 
-# `ReaderTaskEither<R, E, A>` Foundations
+# ReaderTaskEither&lt;R, E, A&gt; Foundations
 
 This post is meant to give some background information on the [ReaderTaskEither<R, E, A>](https://github.com/gcanti/fp-ts/blob/master/src/ReaderTaskEither.ts) type from [fp-ts](https://gcanti.github.io/fp-ts/).
 
-## What is a `ReaderTaskEither<R, E, A>`?
+## What is a ReaderTaskEither?
 
 To understand `ReaderTaskEither<R, E, A>` (aka `RTE`), it's important to understand some of the lower-level `fp-ts` "effect types" upon which `RTE` is built. Note that in fp-ts, some of these types might be encoded slightly differently than below, but the concepts should be the same. Also note that nearly all of the types and concepts below have a history that predates `fp-ts` (and TypeScript for that matter) by decades - many of these ideas come from languages like Haskell, Scala, PureScript, OCaml, and others.
 
-## `IO<A>`
+## IO&lt;A&gt;
 
 ```typescript
 type IO<A> = () => A
@@ -26,7 +26,7 @@ type IO<A> = () => A
 
 `IO<A>` represents a lazy, synchronous computation that, when run, may perform side effects and then produce a value of type `A`. The side effects might be involved with the production of the `A` value (e.g. reading from a `DOM` element, `localStorage`, etc.), or might be unrelated, "unobservable" side effect(s), like synchronously writing to a file, sending a message on a network connection, writing to the `DOM`, etc. `IO<A>` is intended to be used for synchronous effectful computations that are not expected to fail, as there is no way to represent failure other than `throw`ing an `Error` from the function, which is undesirable, and would be unexpected by the caller. If you have a synchronous, effectful operation that can fail, see `IOEither<E, A>`.
 
-### Aside: `IO<void>`
+### Aside: IO&lt;void&gt;
 
 `IO<void>` is a type which represents a side-effecting computation that produces no value at all - its sole purpose is to perform side effects. This could be something like writing to `localStorage`, writing a log message, dispatching a redux action, drawning to the screen, writing to the `DOM`, etc.
 
@@ -40,7 +40,7 @@ const mySideEffect: IO<void> = () => {
 }
 ```
 
-### Aside: `Lazy<A>`
+### Aside: Lazy&lt;A&gt;
 
 ```typescript
 type Lazy<A> = () => A
@@ -52,7 +52,7 @@ type Lazy<A> = () => A
 
 One other reason for the existence of both of these types is that in `fp-ts` v1, the `IO<A>` type was encoded slightly differently than it is in v2+, so there actually was a type-level difference between `Lazy<A>` and `IO<A>` at that time. In fp-ts v2+, the encoding of `IO<A>` was changed to simply `() => A` (or the `interface` encoding of that function type), so there is no longer a practical difference in the types.
 
-## `IOEither<E, A>`
+## IOEither&lt;E, A&gt;
 
 ```typescript
 type IOEither<E, A> = IO<Either<E, A>>
@@ -65,7 +65,7 @@ type IOEither<E, A> = IO<Either<E, A>>
 
 `IOEither<E, A>` represents a synchronous, lazy computation that can produce a value of type `A`, or fail with an error of type `E`. This is intended to be used for synchronous effectful code that has the possibility of failure. The `IO<_>` part implies the presence of side effects, because if there were no effects, it would probably be better to just use `Either<E, A>`, or potentially `Lazy<Either<E, A>>`. The `Either<E, A>` part of the type allows for the representation of errors in the effectful computation.
 
-## `Promise<A>`
+## Promise&lt;A&gt;
 
 - Sync/async: **async**
 - Can fail: **yes** (with non-generic/non-polymorphic `any` error)
@@ -75,7 +75,7 @@ type IOEither<E, A> = IO<Either<E, A>>
 
 Because the computation is async, there is no way to synchronously extract a value of type `A` directly out of a `Promise<A>`. In other words, there is no function of type `Promise<A> => A`. The value that is eventually produced by a `Promise<A>` can be accessed by chaining on a continuation callback via `.then((a: A) => ...)`. Or you can use the `await` approach, which is essentially just syntax sugar for `.then`.
 
-## `Task<A>`
+## Task&lt;A&gt;
 
 ```typescript
 type Task<A> = () => Promise<A>
@@ -89,7 +89,7 @@ type Task<A> = () => Promise<A>
 
 So if `Task<A>` is just a lazy `Promise<A>`, why not just use `Promise<A>`? The reason is that a value of type `Task<A>` is a pure and referentially-transparent **description** of an effectful computation, whereas a value of type `Promise<A>` is an impure, referentially-opaque, already-running (or possibly already-completed) effectful computation. Another intuition is that a `Task<A>` is a "canned" or "freeze-dried" side effect that you can pass around, compose, substitute, etc., and then open or thaw it out it at the right time; whereas, a `Promise<A>` is the contents of the can - it's a little messier to pass around. The simple act of making the evaluation of the `Promise<A>` lazy makes `Task<A>` pure. When run, the `Task<A>` will perform impure side effects, but the `Task` itself is pure. The same idea applies to `IO<A> = () => A` compared to an effectful expression that produces an `A` - the act of deferring the side effects make the `IO<A>` type pure. This idea may take some time and hands-on practice to sink in. Purity and referential transparency are important concepts in pure functional programming because they allow you to make assumptions about the behavior of your program based on provable mathematical laws, perform substitutions of expressions, variables, and values both in actuality and mentally, and generally reason about the behavior of your program just by looking at the types. Without some of these principles, some of which are enforced by the compiler and some of which are followed by convention and discipline, you can't really make any assumptions about the behavior of a program, because any piece of code can do just about anything it wants at any time. By constraining ourselves to a set of well-behaved types and principles, we can eliminate whole classes of bugs and unexpected behaviors, and make our code more maintainable and reusable.
 
-## `TaskEither<E, A>`
+## TaskEither&lt;E, A&gt;
 
 ```typescript
 type TaskEither<E, A> = Task<Either<E, A>>
@@ -104,7 +104,7 @@ type TaskEither<E, A> = Task<Either<E, A>>
 
 Like `Promise<A>`, you can't "get the value out" of a `Task<A>` nor anything based on `Task`. You access the value by composing on functions like `map`, `chain`, and others.
 
-## `Reader<R, A>`
+## Reader&lt;R, A&gt;
 
 ```typescript
 type Reader<R, A> = (r: R) => A
@@ -116,7 +116,7 @@ type Reader<R, A> = (r: R) => A
 
 `Reader<R, A>` represents a synchronous computation that produces a value of type `A` by reading from some contextual value provided via the function argument of type `R`. A `Reader<R, A>` is just as simple as it looks - it's just a function that takes an argument `R` and produces a value `A`. The key aspect of `Reader` is encoding the ability for a computation to utilize an **explicit** input value to perform its computation. If you think about the effect types we've seen so far (`IO<A>`, `TaskEither<E, A>`, etc.), they only deal with outputs - the `E` error type or the `A` success type. `Reader` introduces the concept of an input, and gives you the power to compose effects that depend on different inputs to run. How `Reader` is used in practice is where it gets more interesting. Note that a `Reader<R, A>` does not typically imply the presence of side effects by itself - for something like that, you'd probably use `type ReaderIO<R, A> = Reader<R, IO<A>>`, `ReaderIOEither<R, E, A> = Reader<R, IOEither<E, A>>`, or the `ReaderTask*` types.
 
-## `ReaderIO<R, A>` and `ReaderIOEither<R, E, A>`
+## ReaderIO&lt;R, A&gt; and ReaderIOEither&lt;R, E, A&gt;
 
 ```typescript
 type ReaderIO<R, A> = Reader<R, IO<A>>
@@ -134,7 +134,7 @@ Note that `ReaderIOEither` may not exist in `fp-ts` at the time of this writing,
 
 This approach of "stacking" effect types is similar to how monad transformers work, and is sometimes referred to as vertical composition of effects - a "stack of effects" or an "effect stack." The idea is that you create a "more capable" effect type (i.e. one that is able to handle more flexible or expressive effects) by combining the capabilities of less-capable effects.
 
-## `ReaderTask<R, A>`
+## ReaderTask&lt;R, A&gt;
 
 ```typescript
 type ReaderTask<R, A> = Reader<R, Task<A>>
@@ -148,7 +148,7 @@ type ReaderTask<R, A> = Reader<R, Task<A>>
 
 As you might imagine, a `ReaderTask<R, A>` combines the capabilities of `Reader<R, A>` and `Task<A>`. `Reader` provides the ability to depend on some input to run, and `Task` provides the ability to perform an async computation that can't fail. To add the ability to fail, continue on to `ReaderTaskEither<R, E, A>`.
 
-## `ReaderTaskEither<R, E, A>`
+## ReaderTaskEither&lt;R, E, A&gt;
 
 Below is a step-by-step expansion of `ReaderTaskEither<R, E, A>` into it's underlying type:
 
