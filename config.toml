@@ -44,8 +44,8 @@ enableEmoji = true
   customCSS = []
   inverted = false
   customJS = [
-    "https://cdnjs.cloudflare.com/ajax/libs/anchor-js/4.2.0/anchor.min.js",
-    "/js/main.js"
+    #"https://cdnjs.cloudflare.com/ajax/libs/anchor-js/4.2.0/anchor.min.js",
+    #"/js/main.js"
   ]
 
 # This is a hack to use the layouts/partials/csp.html template to inject custom scripts and stuff
