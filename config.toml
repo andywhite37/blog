@@ -41,8 +41,9 @@ enableEmoji = true
   hidecopyright = true
   rtl = false
   math = true
-  customCSS = []
+  colorScheme = "auto"
   inverted = false
+  customCSS = []
   customJS = [
     #"https://cdnjs.cloudflare.com/ajax/libs/anchor-js/4.2.0/anchor.min.js",
     #"/js/main.js"
