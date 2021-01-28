@@ -18,6 +18,9 @@ I'm currently using the [hugo-coder theme](https://themes.gohugo.io/hugo-coder/)
 # First time setup
 
 ```sh
+# Install hugo (if needed)
+> brew install hugo
+
 # Clone the repo
 # --recursive b/c themes and the public/ folder are submodules
 > git clone --recursive git@github.com:andywhite37/blog
@@ -28,14 +31,20 @@ I'm currently using the [hugo-coder theme](https://themes.gohugo.io/hugo-coder/)
 
 # Update themes and other submodules
 
-```
+```sh
 > git submodule update --init --recursive
+```
+
+# Create a new post
+
+```sh
+> hugo new posts/2021-01-27-my-new-post.md
 ```
 
 # Run local server
 
 ```
-# Run he local server (with drafts included)
+# Run the local server (with drafts included)
 > hugo server -D
 ```
 
