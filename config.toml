@@ -41,31 +41,35 @@ enableEmoji = true
   hidecopyright = true
   rtl = false
   math = true
-  custom_css = []
+  customCSS = []
   inverted = false
-  custom_js = [
+  customJS = [
     "https://cdnjs.cloudflare.com/ajax/libs/anchor-js/4.2.0/anchor.min.js",
     "/js/main.js"
   ]
 
+# This is a hack to use the layouts/partials/csp.html template to inject custom scripts and stuff
+[params.csp]
+  x = "x"
+
 [[params.social]]
   name = "GitHub"
-  icon = "fab fa-github fa-2x"
+  icon = "fa fa-github fa-2x"
   weight = 1
   url = "https://github.com/andywhite37"
 [[params.social]]
   name = "Twitter"
-  icon = "fab fa-twitter fa-2x"
+  icon = "fa fa-twitter fa-2x"
   weight = 2
   url = "https://twitter.com/whitehouse3001"
 [[params.social]]
   name = "Facebook"
-  icon = "fab fa-facebook fa-2x"
+  icon = "fa fa-facebook fa-2x"
   weight = 2
   url = "https://facebook.com/andywhite2"
 [[params.social]]
   name = "LinkedIn"
-  icon = "fab fa-linkedin fa-2x"
+  icon = "fa fa-linkedin fa-2x"
   weight = 3
   url = "https://linkedin.com/in/andywhitesoftwaredeveloper"
 
