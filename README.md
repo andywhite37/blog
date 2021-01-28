@@ -27,6 +27,9 @@ I'm currently using the [hugo-coder theme](https://themes.gohugo.io/hugo-coder/)
 
 # Go into the repo
 > cd blog
+
+# Make sure to checkout the master branch of the submodule, so the deploy script updates the branch correctly
+> cd public && git checkout master && cd ..
 ```
 
 # Update themes and other submodules
