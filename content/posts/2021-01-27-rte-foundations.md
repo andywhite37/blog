@@ -4,7 +4,6 @@ title: "TypeScript + fp-ts: ReaderTaskEither Foundations"
 description: ""
 categories: ["Software Development", "Functional Programming"]
 tags: ["TypeScript", "fp-ts", "React"]
-draft: true
 ---
 
 # `ReaderTaskEither<R, E, A>` Foundations
