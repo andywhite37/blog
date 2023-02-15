@@ -9,7 +9,8 @@ paginate = 20
 canonifyurls = true
 
 # Google Analytics
-googleAnalytics = "UA-151733054-1"
+#googleAnalytics = "UA-151733054-1"
+googleAnalytics = "G-MM3WH52FQF"
 
 # Disqus
 disqusShortname = "andywhite-xyz"
@@ -23,66 +24,66 @@ enableEmoji = true
 
 # Sitemap settings (not sure if this is hugo core or theme-driven?)
 [sitemap]
-  changefreq = "monthly"
-  priority = 0.5
-  filename = "sitemap.xml"
+changefreq = "monthly"
+priority = 0.5
+filename = "sitemap.xml"
 
 # hugo-coder theme settings
 [params]
-  author = "Andy White"
-  info = "Hello, my name is Andy. Welcome to my personal website!"
-  description = "Andy White's personal website"
-  keywords = "blog,tech,developer,software,personal"
-  avatarurl = "images/andy.jpeg"
-  #favicon_32 = "/img/favicon-32x32.png"
-  #favicon_16 = "/img/favicon-16x16.png"
-  footercontent = ""
-  hidecredits = true
-  hidecopyright = true
-  rtl = false
-  math = true
-  colorScheme = "auto"
-  inverted = false
-  customCSS = []
-  customJS = [
-    #"https://cdnjs.cloudflare.com/ajax/libs/anchor-js/4.2.0/anchor.min.js",
-    #"/js/main.js"
-  ]
+author = "Andy White"
+info = "Hello, my name is Andy. Welcome to my personal website!"
+description = "Andy White's personal website"
+keywords = "blog,tech,developer,software,personal"
+avatarurl = "images/andy.jpeg"
+#favicon_32 = "/img/favicon-32x32.png"
+#favicon_16 = "/img/favicon-16x16.png"
+footercontent = ""
+hidecredits = true
+hidecopyright = true
+rtl = false
+math = true
+colorScheme = "auto"
+inverted = false
+customCSS = []
+customJS = [
+  #"https://cdnjs.cloudflare.com/ajax/libs/anchor-js/4.2.0/anchor.min.js",
+  #"/js/main.js"
+]
 
 # This is a hack to use the layouts/partials/csp.html template to inject custom scripts and stuff
 [params.csp]
-  x = "x"
+x = "x"
 
 [[params.social]]
-  name = "GitHub"
-  icon = "fa fa-github fa-2x"
-  weight = 1
-  url = "https://github.com/andywhite37"
+name = "GitHub"
+icon = "fa fa-github fa-2x"
+weight = 1
+url = "https://github.com/andywhite37"
 [[params.social]]
-  name = "Twitter"
-  icon = "fa fa-twitter fa-2x"
-  weight = 2
-  url = "https://twitter.com/whitehouse3001"
+name = "Twitter"
+icon = "fa fa-twitter fa-2x"
+weight = 2
+url = "https://twitter.com/whitehouse3001"
 [[params.social]]
-  name = "Facebook"
-  icon = "fa fa-facebook fa-2x"
-  weight = 2
-  url = "https://facebook.com/andywhite2"
+name = "Facebook"
+icon = "fa fa-facebook fa-2x"
+weight = 2
+url = "https://facebook.com/andywhite2"
 [[params.social]]
-  name = "LinkedIn"
-  icon = "fa fa-linkedin fa-2x"
-  weight = 3
-  url = "https://linkedin.com/in/andywhitesoftwaredeveloper"
+name = "LinkedIn"
+icon = "fa fa-linkedin fa-2x"
+weight = 3
+url = "https://linkedin.com/in/andywhitesoftwaredeveloper"
 
 [[menu.main]]
-  name = "Blog"
-  weight = 1
-  url = "/posts/"
+name = "Blog"
+weight = 1
+url = "/posts/"
 [[menu.main]]
-  name = "Projects"
-  weight = 2
-  url = "/projects/"
+name = "Projects"
+weight = 2
+url = "/projects/"
 [[menu.main]]
-  name = "About"
-  weight = 3
-  url = "/about/"
+name = "About"
+weight = 3
+url = "/about/"
